@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Morphe Manager Downloaders</string>
+    <string name="app_name">Morphe Downloader</string>
     <string name="open_morphe">Open in Morphe</string>
     <string name="share">Share file</string>
     <string name="cancel">Cancel download</string>

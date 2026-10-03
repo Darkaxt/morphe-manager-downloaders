@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Environment
 import android.webkit.URLUtil
 import java.io.File
+import java.io.IOException
 import java.util.UUID
 
 /** One persisted system download. Android owns transfers even while this app is closed. */
@@ -30,7 +31,7 @@ class Downloads(context: Context) {
             .ifBlank { "download.apk" }
         val target = File(app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "${UUID.randomUUID()}-$name")
         val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle(name).setDescription("Morphe Manager Downloaders · APKMirror")
+            .setTitle(name).setDescription("${app.getString(R.string.app_name)} · APKMirror")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationUri(Uri.fromFile(target))
             .addRequestHeader("User-Agent", userAgent)
@@ -43,15 +44,16 @@ class Downloads(context: Context) {
             .putString("name", name).commit()
     }
 
-    data class State(val status: Int, val downloaded: Long, val total: Long, val reason: Int)
-    fun query(): State? {
-        if (id < 0) return null
-        manager.query(DownloadManager.Query().setFilterById(id)).use { cursor ->
+    data class State(val status: Int, val downloaded: Long, val total: Long, val reason: Int, val localUri: String?)
+    fun query(downloadId: Long = id): State? {
+        if (downloadId < 0) return null
+        manager.query(DownloadManager.Query().setFilterById(downloadId)).use { cursor ->
             if (!cursor.moveToFirst()) return null
             fun number(column: String) = cursor.getLong(cursor.getColumnIndexOrThrow(column))
             return State(number(DownloadManager.COLUMN_STATUS).toInt(),
                 number(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR),
-                number(DownloadManager.COLUMN_TOTAL_SIZE_BYTES), number(DownloadManager.COLUMN_REASON).toInt())
+                number(DownloadManager.COLUMN_TOTAL_SIZE_BYTES), number(DownloadManager.COLUMN_REASON).toInt(),
+                cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)))
         }
     }
 
@@ -59,15 +61,26 @@ class Downloads(context: Context) {
     fun validate() {
         val snapshot = synchronized(stateLock) {
             if (id < 0 || ready || error != null) return
-            Triple(id, file, displayName)
+            id to displayName
         }
         try {
-            val source = snapshot.second ?: error("The downloaded file is missing.")
+            val completed = query(snapshot.first)
+            if (completed?.status != DownloadManager.STATUS_SUCCESSFUL)
+                throw IOException("The system download is not complete.")
+            val uri = completed.localUri?.let(Uri::parse)
+                ?: throw IOException("The system download has no local file.")
+            if (uri.scheme != "file" || uri.path == null)
+                throw IOException("The system download has an unsupported local URI.")
+            // The provider may rewrite the requested filename. Its completed URI is authoritative.
+            val source = File(uri.path!!).canonicalFile
+            val directory = app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.canonicalFile
+            if (directory == null || source.parentFile != directory)
+                throw IOException("The system download is outside the companion's download folder.")
             val detected = ArchiveFormat.detect(source)
-            val properName = snapshot.third.substringBeforeLast('.', snapshot.third) + "." + detected.extension
+            val properName = snapshot.second.substringBeforeLast('.', snapshot.second) + "." + detected.extension
             synchronized(stateLock) {
                 if (id == snapshot.first && error == null && !ready) {
-                    prefs.edit().putBoolean("ready", true).putString("format", detected.name)
+                    prefs.edit().putBoolean("ready", true).putString("path", source.absolutePath).putString("format", detected.name)
                         .putString("name", properName).commit()
                 }
             }

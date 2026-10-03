@@ -32,7 +32,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Companion verification build failed.' }
     $artifactRoot = Join-Path $repoRoot 'artifacts'
     New-Item -ItemType Directory -Path $artifactRoot -Force | Out-Null
-    $artifact = Join-Path $artifactRoot 'Morphe-Manager-Downloaders-0.1.0.apk'
+    $artifact = Join-Path $artifactRoot 'Morphe-Downloader-0.1.1.apk'
     Copy-Item -LiteralPath "$OutputRoot/companion/outputs/apk/release/app-release.apk" -Destination $artifact
     Write-Output $artifact
 } finally { $env:COMPANION_KEYSTORE_PASSWORD = $previousPassword }

@@ -66,11 +66,41 @@ Local signed deliverable: `artifacts/Morphe-Manager-Downloaders-0.1.0.apk`.
   `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
 - apksigner verification passes with v2 signing; minimum Android 8.
 - Persistent companion signing key/password remain outside Git. Morphe and its
-  patch-signing identity are unchanged. No GitHub release is published.
+  patch-signing identity are unchanged. The verified 0.1.0 artifact was subsequently
+  published and installed through ObtainX on the authorized phone.
+
+## Physical phone and corrective build
+
+GitHub v0.1.0 and the phone-installed base.apk both match the recorded release
+SHA-256. ObtainX tracks this repository. Its existing InstallerX Resign route
+installed the original signature (Install, not Resign); first-use notification
+and all-files permissions were required for that installer.
+
+On Samsung SM-F966B / Android 16, existing Morphe 1.33.0-dev.17 selected Showly
+3.72.0 and opened its actual APKMirror variant through LinkSheet nightly. The row
+requires a double-tap with its default configuration. The configured private
+Byparr server resolved the page and Android downloaded the correct original:
+
+- Package `com.michaldrabik.showly2`, version 3.72.0/build 843.
+- 12,004,991 bytes; SHA-256 `3ec55fffbb2614c810e49f9e3441d4f29c0e263e4f8dd6d5fdbec1e4d0ea1708`.
+- MD5 `ebbea07e896f21d3c0a559c4223f9c62`, matching APKMirror's displayed file hash.
+
+The initial import failed: Samsung's DownloadManager wrote `downloadfile.apk`
+instead of the requested filename. The regression reproduces the stale requested
+path while a real DownloadManager transfer succeeds. It fails on 0.1.0 and passes
+with completed `COLUMN_LOCAL_URI` validation in 0.1.1, including equal bytes at a
+receiving content URI. Endpoint, failure/cancellation/recreation checks pass on the
+isolated emulator. JVM checks, signed release build, release lint and v2 signature
+verification pass. The signing certificate is unchanged.
+
+Corrective deliverable: `artifacts/Morphe-Downloader-0.1.1.apk`, 2,083,318 bytes;
+SHA-256 `e5a214ca7949d2fac3f842ec05df7e4db7cb6fc2fb12c79b4b5ea05de9ee7170`.
+The physical-phone import retest of this build is still pending. Stage 5 remains ACTIVE.
 
 ## Testing limits
 
-The complete new Byparr path is verified on the emulator, not the physical phone.
+The complete new Byparr path is verified on the emulator. On the physical phone,
+the original download passed but import exposed the file-location defect above.
 The former embedded-browser build was installed for authorized testing on the
 Samsung SM-F966B; Cloudflare verification looped there as well. External Chrome/
 Firefox success was user-reported, not independently captured. The AYN Thor was

@@ -134,16 +134,33 @@ no-release boundary for this companion release only.
   target. Preserve existing Morphe queue and network settings.
 - R12: Record real phone results, failures and exact limits; commit/push supporting
   documentation. Clean only expendable test files, preserving APK and evidence.
+- R13: User-authorized rename during phone verification: use **Morphe Downloader**
+  for the app label and APK filename. Keep the existing package ID, repository and
+  signing identity so the installed companion receives an ordinary update.
 
-4. Release and ObtainX installation - ACTIVE (R10)
+4. Release and ObtainX installation - COMPLETE (R10)
    - Release has the verified APK; remote asset equals the local deliverable.
    - Existing ObtainX tracks this repository and installs the expected companion
      package/version on the authorized phone.
-5. Showly phone workflow and reconciliation - NOT STARTED (R11, R12)
+5. Showly phone workflow and reconciliation - ACTIVE (R11, R12, R13)
    - Morphe's real Showly link traverses LinkSheet, Byparr and original download.
    - Existing Morphe reads the original Showly file and displays the selected
      app/version. No target patch/install or changes to its signing identity occur.
    - Evidence, limits, cleanup and source documentation are reconciled.
+   - The installed update and APK use Morphe Downloader while preserving identity.
 
-Only Stage 4 is ACTIVE. Existing implementation stages remain COMPLETE. No required
-tracked deferrals exist. New phone-validation completion is not yet claimed.
+Stage 4 passed: GitHub v0.1.0 is a normal published release with the verified APK.
+GitHub asset digest and installed phone base.apk SHA-256 both equal
+67b04bddb602dbecea298f494994a0dd294f48e7aa1b49e94fb6284b29dfa834.
+ObtainX tracks the correct repository/package and shows installed 0.1.0 as up to date.
+Its existing InstallerX Resign route installed the original APK without resigning.
+InstallerX required notification and all-files permissions during its first-use flow;
+these were enabled for that installer only. No other app was updated or replaced.
+Only Stage 5 is ACTIVE. No required tracked deferrals exist. Showly's phone workflow
+is not yet verified. The actual phone test exposed an internal defect: Samsung's
+DownloadManager successfully wrote `downloadfile.apk`, while validation used the
+requested filename. Stage 5 owns correcting validation to use the provider's
+completed local URI, regression verification, and a corrective release needed to
+retest through ObtainX. The downloaded original is 12,004,991 bytes, SHA-256
+3ec55fffbb2614c810e49f9e3441d4f29c0e263e4f8dd6d5fdbec1e4d0ea1708.
+This correction preserves R5/R11; it does not change their acceptance criteria.

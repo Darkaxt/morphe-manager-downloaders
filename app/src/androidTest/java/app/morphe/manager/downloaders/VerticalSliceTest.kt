@@ -32,7 +32,12 @@ class VerticalSliceTest {
         val downloaded = CountDownLatch(1)
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             // Keep this URI-contract test in the companion; the receiving test APK is opened explicitly.
-            if (key == "id" && store.id >= 0) store.markOpened()
+            if (key == "id" && store.id >= 0) {
+                store.markOpened()
+                // A provider may rewrite the requested destination (observed on Samsung).
+                // Validation must use the completed download's reported URI, not this hint.
+                prefs.edit().putString("path", File(context.getExternalFilesDir(null), "requested-but-not-written.apk").absolutePath).commit()
+            }
             if (key == "ready" || key == "error") downloaded.countDown()
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -42,6 +47,12 @@ class VerticalSliceTest {
                 assertTrue("Download did not reach completion", downloaded.await(45, TimeUnit.SECONDS))
                 assertNull(store.error)
                 assertTrue(store.ready)
+                context.getSystemService(android.app.DownloadManager::class.java)
+                    .query(android.app.DownloadManager.Query().setFilterById(store.id)).use { cursor ->
+                        assertTrue(cursor.moveToFirst())
+                        val actual = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_LOCAL_URI)))
+                        assertEquals(File(actual.path!!).canonicalFile, store.file!!.canonicalFile)
+                    }
                 assertEquals(ArchiveFormat.APK, store.format)
                 assertEquals("fixture.apk", store.displayName)
                 val completedId = store.id

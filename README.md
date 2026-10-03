@@ -1,4 +1,4 @@
-# Morphe Manager Downloaders
+# Morphe Downloader
 
 Standalone APKMirror companion for Morphe Manager. Select it in LinkSheet when
 Morphe opens an APKMirror link. It follows unambiguous download steps, downloads
@@ -12,10 +12,12 @@ See [verification](docs/verification.md) and the [specification](docs/specificat
 
 ## Use
 
-1. Install the companion APK alongside your existing Morphe installation.
+1. Install [the latest release](https://github.com/Darkaxt/morphe-manager-downloaders/releases/latest)
+   alongside your existing Morphe installation. ObtainX can track this repository.
 2. Enable Expert mode in Morphe's settings.
-3. Open Morphe's APKMirror download link and select **Morphe Manager Downloaders**
-   in LinkSheet's app chooser. Its handlers are limited to APKMirror domains;
+3. Open Morphe's APKMirror download link and select **Morphe Downloader**
+   in LinkSheet's app chooser (double-tap its row with LinkSheet's default behavior).
+   Its handlers are limited to APKMirror domains;
    it does not claim every web link or replace your general-purpose browser.
 4. When prompted, enter your private HTTPS Byparr API URL, for example
    `https://your-server:8191/v1`. The setting persists. Your phone must be able to
@@ -56,7 +58,7 @@ Requires Java 17+, Android SDK 36 and the bundled Gradle wrapper.
 ```
 
 The signing script builds and lints the release configuration, then copies the
-local deliverable to `artifacts/Morphe-Manager-Downloaders-0.1.0.apk`. It creates a
+local deliverable to `artifacts/Morphe-Downloader-0.1.1.apk`. It creates a
 persistent signing identity only on first use, under
 `%USERPROFILE%/.android/keystores/morphe-manager-downloaders/`. Keep `companion.p12`
 and `password.txt` together and private; both are needed to build updates accepted

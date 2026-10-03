@@ -513,10 +513,22 @@ endpoint for the verified 0.3.1 dialog update. Publish that completed R22 scope
 with accurate release notes explicitly identifying the unresolved APKMirror
 automatic correction and absent new physical-phone proof. Keep R21 BLOCKED.
 
-Stage 14 — publish verified 0.3.1 dialog update: ACTIVE (R24/R22). Acceptance:
+Stage 14 — publish verified 0.3.1 dialog update: COMPLETE (R24/R22). Acceptance:
 reconcile unchanged production code/artifact against the reviewed build, lint,
 signature, UI and upgrade evidence; preserve the existing certificate/package;
 commit/push source and release notes; publish a normal/latest GitHub v0.3.1 with
 the verified APK; independently download its asset and compare bytes, size and
 digest; clean release-verification temporary files and record actual completion.
 No Gradle run is needed for unchanged application code and the verified artifact.
+
+Stage 14 closure (2026-10-04): reviewed unchanged production-code and artifact
+evidence passes the release boundary. Source/release notes were committed and
+pushed; normal/latest GitHub v0.3.1 targets
+`dc476932fe7ccf295dbc95c1049a3046b94d07af`. Its single APK asset is 2,103,319
+bytes, SHA-256 `b7d5d1ad62399f52ff83bbe20ce06f645b3d9f0c47386b195e32d6d32aa73ca9`.
+GitHub reports uploaded/non-draft/non-prerelease status and the matching digest.
+An independent release download was byte-equal to the tested local APK. Reviewed
+cleanup removed only that temporary verification download; the original local
+deliverable and evidence remain. No Gradle command was run, so no build-gate or
+new-profile verification is claimed. Stage 13 remains BLOCKED on B5/B6; release
+notes explicitly retain those limits. Stage 14 has no blocker or tracked deferral.

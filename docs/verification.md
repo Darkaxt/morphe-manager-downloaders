@@ -318,7 +318,8 @@ visual inspection. Logs and the dialog image are retained under
 - SHA-256: `b7d5d1ad62399f52ff83bbe20ce06f645b3d9f0c47386b195e32d6d32aa73ca9`.
 - Certificate SHA-256: `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
 
-This is a local artifact, not a new GitHub release. The APKMirror automatic
+At the initial checkpoint this was a local artifact; it was subsequently
+published under R24, as recorded below. The APKMirror automatic
 correction and physical-phone readiness/receiving-URI proof remain blocked, as
 recorded in specification B5/B6 and the APKMirror Byparr handoff. No downloaded
 YouTube original was patched or installed. Byparr and its other consumers were
@@ -338,3 +339,14 @@ command exit, use two workers/no parallel execution, and start with explicit
 compilation. In-process compilation could remove the separate compiler JVM but
 would share the Gradle heap with AGP; it has not been validated under the new
 budget and should be evaluated in that next required focused build.
+
+## Published 0.3.1 dialog update (2026-10-04)
+
+[v0.3.1](https://github.com/Darkaxt/morphe-manager-downloaders/releases/tag/v0.3.1)
+is the normal/latest release targeting source
+`dc476932fe7ccf295dbc95c1049a3046b94d07af`. It includes the verified dialog
+recovery changes and accurate unresolved-APKMirror notes. The single uploaded APK
+matches the size/digest above; an independently downloaded copy matched every
+byte of the tested local artifact. Temporary release verification files were
+removed through a reviewed cleanup ticket. No additional Gradle build occurred.
+Stage 14 is COMPLETE; Stage 13's automatic correction/phone proof stays BLOCKED.

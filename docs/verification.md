@@ -201,3 +201,42 @@ also matches the SHA-256 above. Exact task-generated Temp roots were removed
 through reviewed cleanup tickets after preserving deliverables/evidence and
 stopping the task emulator, fixture server and idle task Gradle daemon. The owned
 capture tab was closed; other user browser tabs and build processes were preserved.
+
+## Unreleased ready metadata and setup labels (2026-10-03)
+
+The ready dialog follows the inspected InstallerX source and captured phone
+dialog: app label as the prominent centered title, then package ID and version
+name/build as smaller centered details. Details come from the original APK's
+Android manifest/resources, not its filename or the download website's title.
+Android PackageManager reads plain APKs and a temporarily extracted bundle base
+APK off the UI thread. Temporary base files are removed; metadata is persisted
+atomically with readiness. Older ready records are populated once on reopening.
+Optional metadata failure retains the filename and the structurally validated file.
+
+Fresh verification on the isolated API 35 emulator includes:
+
+- An initial ready metadata regression fails against the old filename display.
+  Saved plain APK, APKM base, XAPK base with an invalid split candidate, recreation,
+  metadata fallback and unchanged archive hashes then pass. Bundle inputs are
+  controlled containers containing a real APK, not live provider bundle downloads.
+- The retained original Showly 3.72.0 APK shows `Showly`,
+  `Package: com.michaldrabik.showly2`, and `Version: 3.72.0 (843)`.
+  Independent aapt inspection confirms the values. Its bytes remain unchanged.
+  The compact ready layout is visually inspected in both light and dark themes.
+- Automatic/manual download, completed-window recreation, actual DownloadManager
+  local URI, unchanged receiver hash/filename/MIME, bounded dialog/accessibility,
+  failure/challenge/cancellation and separate-process transfer restoration pass.
+- Byparr setup displays `Cancel` and `Save`. The focused endpoint save/recreation
+  and failed-page edit/retry contracts pass with the shortened labels.
+- Current debug/test APK builds and companion JVM contracts pass. Final debug
+  lint has zero errors; its existing preference/localization/dependency/style
+  warnings remain. No lint baseline or production timeout/retry was added.
+
+Evidence and ready dialog screenshots are retained locally under
+`artifacts/verification/metadata/`. This source refinement is not a new published
+release; the verified 0.2.0 asset is preserved. Byparr and physical devices were
+unchanged. Existing independent phone and Uptodown criteria remain blocked as
+recorded in the specification; this presentation change does not close them.
+The task emulator, fixture server and idle task Gradle daemon were stopped after
+verification. The exact registered temporary build/emulator root was removed
+through a reviewed cleanup ticket after retaining the required evidence.

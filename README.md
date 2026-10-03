@@ -41,6 +41,11 @@ Retrying is explicit. Check the displayed failure as well as the URL: an unresol
 server challenge, missing release or client download rejection cannot necessarily
 be fixed by changing the endpoint.
 
+Unreleased UI refinements in the current source show the downloaded app's label,
+package ID and version/build in the ready dialog, following InstallerX's layout.
+Byparr setup uses **Cancel** and **Save**; saving still retries a pending page.
+These refinements are not included in the published 0.2.0 APK.
+
 The companion has its own package (`app.morphe.manager.downloaders`) and signing
 identity. It never patches, signs or installs downloaded apps and does not replace
 Morphe or touch Morphe's patch-signing keystore. Existing patched installations

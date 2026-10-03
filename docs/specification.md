@@ -344,3 +344,39 @@ APK; GitHub's SHA-256 digest also matches
 `60ec0eeafcdd3de91aa1368187fc5f2c6f5431b833f8e8576eda8cce918e7750`.
 All R18 release criteria pass and Stage 10 is COMPLETE. R18 excludes unresolved
 Stages 5 and 9 from this release; no claim of all-source completion is made.
+
+## R19: Ready archive identity (2026-10-03)
+
+Replace the ready filename title with archive metadata, following the inspected
+InstallerX dialog: app label as the main title, then `Package: {package ID}` and
+`Version: {version name} ({version code})` as smaller centered details. Read the
+downloaded original APK, including the base APK inside supported APKM/XAPK files,
+off the UI thread. Persist the details with the completed download, and populate
+them for previously saved ready downloads. If optional metadata cannot be read,
+retain a readable filename fallback without rejecting a validated archive.
+Preserve original bytes, handoff filenames/MIME/URI access, loading progress and
+provider behavior. No Byparr changes or new external release are authorized here.
+The user's additional button request belongs to this same presentation scope:
+label the Byparr setup actions `Cancel` and `Save`, preserving their behavior.
+
+Stage 11 — ready metadata presentation: COMPLETE. Covers R19. Acceptance criteria:
+real APK label/package/version/build appear with InstallerX's hierarchy; supported
+bundle base metadata is read and temporary extraction removed; ready state survives
+recreation and legacy metadata backfill; unreadable metadata has a usable fallback;
+original download bytes and receiver filename/URI contract remain unchanged.
+Byparr setup displays `Cancel`/`Save` and retains endpoint saving/retry behavior.
+Verify Android archive parsing and ready UI, the existing download/receiver slice,
+focused lifecycle/presentation contracts and a build, then commit the verified
+scope. Stages 5 and 9 remain BLOCKED on their existing independent boundaries.
+
+Stage 11 reconciliation: a real Showly original displays its resource label,
+package ID and independently confirmed version/build, visually inspected in
+light/dark. Controlled APKM/XAPK containers containing a real base APK preserve
+their hashes and leave no extracted APK in cache. Older ready records populate
+metadata and restore it on recreation; unreadable metadata retains a ready file
+and filename fallback. Automatic/manual download and separate-process transfer
+restoration, original-byte readable URI and filename/MIME contracts pass. Focused
+setup checks pass with `Cancel`/`Save`, including endpoint persistence and retry.
+Current debug/test builds, JVM checks and final lint pass (zero lint errors).
+All R19 presentation criteria pass; no new blocker or deferral remains in this
+scope. This source refinement is unreleased and does not close Stages 5 or 9.

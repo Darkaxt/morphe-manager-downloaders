@@ -2,6 +2,7 @@ package app.morphe.manager.downloaders
 
 import android.app.DownloadManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Environment
 import android.webkit.URLUtil
@@ -21,6 +22,11 @@ class Downloads(context: Context) {
     val format: ArchiveFormat get() = ArchiveFormat.valueOf(prefs.getString("format", "APK")!!)
     val file: File? get() = prefs.getString("path", null)?.let(::File)
     val autoOpened: Boolean get() = prefs.getBoolean("opened", false)
+    val metadataChecked: Boolean get() = prefs.getBoolean("metadataChecked", false)
+    val identity: ArchiveIdentity? get() = prefs.getString("packageName", null)?.let {
+        ArchiveIdentity(prefs.getString("label", null) ?: it, it, prefs.getString("versionName", null),
+            prefs.getLong("versionCode", 0))
+    }
     fun markOpened() { prefs.edit().putBoolean("opened", true).commit() }
 
     fun enqueue(url: String, userAgent: String, disposition: String?, mime: String?, referer: String,
@@ -78,10 +84,11 @@ class Downloads(context: Context) {
                 throw IOException("The system download is outside the companion's download folder.")
             val detected = ArchiveFormat.detect(source)
             val properName = snapshot.second.substringBeforeLast('.', snapshot.second) + "." + detected.extension
+            val identity = ArchiveIdentity.read(app, source, detected)
             synchronized(stateLock) {
                 if (id == snapshot.first && error == null && !ready) {
                     prefs.edit().putBoolean("ready", true).putString("path", source.absolutePath).putString("format", detected.name)
-                        .putString("name", properName).commit()
+                        .putString("name", properName).withIdentity(identity).commit()
                 }
             }
         } catch (e: Exception) {
@@ -90,6 +97,23 @@ class Downloads(context: Context) {
             }
         }
     }
+    /** Backfill completed records created before APK display metadata was persisted. */
+    fun loadReadyMetadata() {
+        val snapshot = synchronized(stateLock) {
+            if (!ready || metadataChecked) return
+            Triple(id, file, format)
+        }
+        val identity = snapshot.second?.let { ArchiveIdentity.read(app, it, snapshot.third) }
+        synchronized(stateLock) {
+            if (ready && id == snapshot.first && file == snapshot.second && !metadataChecked)
+                prefs.edit().withIdentity(identity).commit()
+        }
+    }
+    private fun SharedPreferences.Editor.withIdentity(identity: ArchiveIdentity?): SharedPreferences.Editor =
+        putBoolean("metadataChecked", true).putString("label", identity?.label)
+            .putString("packageName", identity?.packageName).putString("versionName", identity?.versionName)
+            .putLong("versionCode", identity?.versionCode ?: 0)
+
     fun fail(message: String) = synchronized(stateLock) {
         prefs.edit().putBoolean("ready", false).putString("error", message).commit()
         // Only failed transfers are expendable. Successful originals are retained.

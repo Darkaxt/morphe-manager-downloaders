@@ -23,6 +23,7 @@ import java.util.concurrent.Executors
 class MainActivity : ComponentActivity() {
     private lateinit var status: TextView
     private lateinit var apkTitle: TextView
+    private lateinit var apkDetails: TextView
     private lateinit var progress: ProgressBar
     private lateinit var open: Button
     private lateinit var cancel: Button
@@ -80,6 +81,12 @@ class MainActivity : ComponentActivity() {
             text = browserPrefs.getString("title", null)?.let { "Downloading $it" } ?: "Download an original APK"
         }
         root.addView(apkTitle)
+        apkDetails = TextView(this).apply {
+            textSize = 14f; setTextColor(color(R.color.text_secondary)); gravity = Gravity.CENTER
+            setLineSpacing(dp(8).toFloat(), 1f)
+            setPadding(0, 0, 0, dp(16)); visibility = View.GONE
+        }
+        root.addView(apkDetails)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         progress.progressDrawable = getDrawable(R.drawable.download_progress)
         progress.indeterminateTintList = ColorStateList.valueOf(color(R.color.primary))
@@ -176,7 +183,7 @@ class MainActivity : ComponentActivity() {
         val dialog = AlertDialog.Builder(this).setTitle("Byparr server")
             .setMessage((failure?.let { "$it\n\n" } ?: "") +
                 "Enter your private HTTPS Byparr API URL. The saved server resolves download pages; Android downloads the original file.")
-            .setView(input).setPositiveButton("Save and retry", null).setNegativeButton("Keep current state", null)
+            .setView(input).setPositiveButton("Save", null).setNegativeButton("Cancel", null)
             .create()
         settingsDialog = dialog
         dialog.setOnDismissListener { if (settingsDialog === dialog) settingsDialog = null }
@@ -264,6 +271,8 @@ class MainActivity : ComponentActivity() {
 
     private fun refreshDownload() {
         if (isDestroyed) return
+        apkDetails.visibility = View.GONE
+        apkTitle.gravity = Gravity.START
         open.isEnabled = store.ready && store.file?.isFile == true && !loadingPage &&
             !browserPrefs.getBoolean("awaitingDownload", false)
         findViewById<Button>(SHARE_ID).isEnabled = open.isEnabled
@@ -277,7 +286,26 @@ class MainActivity : ComponentActivity() {
             return
         }
         if (store.ready) {
-            apkTitle.text = "Ready: ${browserPrefs.getString("title", null) ?: store.displayName}"
+            if (!store.metadataChecked) {
+                status.text = "Reading APK details…"
+                if (!validating) {
+                    validating = true
+                    executor.execute {
+                        store.loadReadyMetadata()
+                        handler.post { validating = false; if (!isDestroyed) refreshDownload() }
+                    }
+                }
+                return
+            }
+            val identity = store.identity
+            apkTitle.text = identity?.label ?: store.displayName
+            apkTitle.gravity = Gravity.CENTER
+            if (identity != null) {
+                apkDetails.text = "Package: ${identity.packageName}\n" +
+                    (identity.versionName?.let { "Version: $it (${identity.versionCode})" }
+                        ?: "Version: ${identity.versionCode}")
+                apkDetails.visibility = View.VISIBLE
+            }
             progress.isIndeterminate = false; progress.progress = 100
             status.text = "Download complete. Ready to open in Morphe."
             if (resumed && !store.autoOpened) shareToMorphe()

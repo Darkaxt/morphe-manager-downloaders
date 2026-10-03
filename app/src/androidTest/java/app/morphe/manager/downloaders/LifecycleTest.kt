@@ -42,6 +42,7 @@ class LifecycleTest {
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
             val input = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
             assertNotNull("Missing endpoint did not prompt", input)
+            assertTrue(device.hasObject(By.text("CANCEL")))
             input.text = "https://private-server.example:8191"
             val prefs = context.getSharedPreferences("byparr", Context.MODE_PRIVATE)
             val saved = CountDownLatch(1)
@@ -50,7 +51,7 @@ class LifecycleTest {
             }
             prefs.registerOnSharedPreferenceChangeListener(listener)
             try {
-                device.findObject(By.text("SAVE AND RETRY")).click()
+                device.findObject(By.text("SAVE")).click()
                 assertTrue("Endpoint save was not observed", saved.await(15, TimeUnit.SECONDS))
             } finally { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
             assertEquals("https://private-server.example:8191/v1", prefs.getString("endpoint", null))
@@ -72,7 +73,7 @@ class LifecycleTest {
             assertTrue(context.getSharedPreferences("browser", Context.MODE_PRIVATE)
                 .getString("pageError", "").orEmpty().contains("502"))
             input.text = "http://10.0.2.2:8765/v1"
-            device.findObject(By.text("SAVE AND RETRY")).click()
+            device.findObject(By.text("SAVE")).click()
             assertTrue(device.wait(Until.hasObject(By.textContains("arm64 APK")), 15000))
             assertTrue(device.hasObject(By.textContains("x86 APK")))
             assertEquals(-1L, Downloads(context).id)

@@ -73,10 +73,12 @@ class VerticalSliceTest {
                 val completedId = store.id
                 val device = UiDevice.getInstance(instrumentation)
                 assertTrue("Completed download did not reach its ready presentation",
-                    device.wait(Until.hasObject(By.text("Ready: APKMirror fixture")), 15000))
+                    device.wait(Until.hasObject(By.textContains("Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")), 15000))
+                assertTrue(device.hasObject(By.text("Morphe Downloader")))
+                assertTrue(device.hasObject(By.textContains("Package: app.morphe.manager.downloaders")))
                 scenario.recreate()
                 assertTrue("Recreation reopened the incoming link instead of restoring the ready result",
-                    device.wait(Until.hasObject(By.text("Ready: APKMirror fixture")), 15000))
+                    device.wait(Until.hasObject(By.textContains("Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")), 15000))
                 assertEquals(completedId, Downloads(context).id)
                 assertTrue(Downloads(context).ready)
                 val original = store.file!!.readBytes()

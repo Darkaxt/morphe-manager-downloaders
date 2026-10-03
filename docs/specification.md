@@ -454,8 +454,8 @@ attribute the failed hop; regression checks exercise the demonstrated cause;
 the same phone/page reaches validated original readiness with correct metadata
 and readable URI bytes; focused existing-source/lifecycle contracts and signed
 build checks pass; settings/signing identity remain intact; document, clean
-temporary outputs and commit the verified correction. No new external release
-is authorized by this diagnostic/correction request.
+temporary outputs and commit the verified correction. The subsequent R24 delivery
+instruction authorizes release of the verified R22 scope while R21 stays blocked.
 
 R22 (same stage, authorized during diagnosis): request failures stay in the
 standard compact download dialog, showing the actual error plus `Retry` and
@@ -507,3 +507,16 @@ in-process Kotlin compilation against this project's actual plugin versions and
 required behavior. Raise a budget only after diagnosing an actual memory
 failure. Report the actual profile and gate acquisition for the next required
 focused build/test; do not rerun unaffected verification merely to exercise it.
+
+R24 (2026-10-04): the user's correction confirms GitHub delivery is the expected
+endpoint for the verified 0.3.1 dialog update. Publish that completed R22 scope
+with accurate release notes explicitly identifying the unresolved APKMirror
+automatic correction and absent new physical-phone proof. Keep R21 BLOCKED.
+
+Stage 14 — publish verified 0.3.1 dialog update: ACTIVE (R24/R22). Acceptance:
+reconcile unchanged production code/artifact against the reviewed build, lint,
+signature, UI and upgrade evidence; preserve the existing certificate/package;
+commit/push source and release notes; publish a normal/latest GitHub v0.3.1 with
+the verified APK; independently download its asset and compare bytes, size and
+digest; clean release-verification temporary files and record actual completion.
+No Gradle run is needed for unchanged application code and the verified artifact.

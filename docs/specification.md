@@ -57,7 +57,7 @@ APK file handoff; this is the default workflow.
      stay usable and are accurately reported.
    - Byparr setting persists, fails clearly when its API/content is invalid,
      and participates in a real original-file download without replacing Morphe.
-3. Lifecycle, verification and delivery — ACTIVE (R5, R7, R8, R9)
+3. Lifecycle, verification and delivery — COMPLETE (R5, R7, R8, R9)
    - Cancellation/failure/recreation behavior passes focused checks; release APK,
      lint, integration verification, documentation and source delivery complete.
 
@@ -86,13 +86,27 @@ server boundary and actual original-file workflow now pass, rather than substitu
 fixture results or a catalogue response. The API uses POST /v1 with request.get;
 the user's forthcoming upstream POST support is not required by this tested flow.
 
-Stage 3 is ACTIVE for current-source regression checks, release build/lint,
-documentation, final specification reconciliation, commit and source push. No
-blockers or required tracked deferrals remain. Live proof applies to the isolated
-Android 15 emulator and the configured private HTTPS server. The previous phone
-WebView test looped; the new Byparr-only build has not been tested on that phone.
+Stage 3 passed: current-source JVM and Android lifecycle/URI checks, separate-process
+restoration, debug/release lint, locally signed release build and signature verification
+all pass. Documentation records setup, limits, source provenance and signing identity.
+The complete Byparr integration was committed and pushed as fbc3d761; GitHub main
+was independently checked against that commit. Temporary verification outputs were
+removed after preserving the signed deliverable and sanitized integration evidence.
+No blockers or required tracked deferrals remain.
 
-Overall completion awaits Stage 3 closure. No external release is authorized.
+Final reconciliation: R1 is verified by preserved ancestry and the unchanged root
+API compilation; R2/R3 by the standalone identity, existing LinkSheet chooser proof
+and unchanged VIEW/BROWSABLE handlers; R4/R9 by actual Byparr page-to-file proof and
+native setting/selection/failure tests; R5 by Android transfer, original-file hashes,
+archive validation and lifecycle checks; R6 by real Morphe Expert-mode import and
+readable URI sharing; R7 by the signed APK and documentation; R8 by focused checks,
+real external-boundary verification and source delivery. All required criteria are
+satisfied and all stages are COMPLETE. No external release was published.
+
+Live proof applies to the isolated Android 15 emulator and configured private HTTPS
+server. The previous phone WebView test looped; the new Byparr-only build has not
+been tested on that phone. This distinction does not weaken the required emulator
+acceptance criteria or claim physical-phone verification.
 
 ## Consolidation decisions
 

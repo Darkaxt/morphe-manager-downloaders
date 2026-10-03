@@ -28,7 +28,7 @@ APK file handoff; this is the default workflow.
   chooser. Do not alter Morphe or its signing keystore.
 - R7: Produce a locally signed APK and document installation, LinkSheet selection,
   Expert mode, interaction limits, provenance, verification and signing identity.
-  No external release is authorized. On 2026-10-03 the user authorized live testing
+  On 2026-10-03 the user authorized live testing
   on their connected phone (Samsung SM-F966B, serial RFCY80551LT), including installing
   the companion and reaching existing Morphe's import screen. Do not use the Thor,
   replace Morphe, patch/install the downloaded target, or alter its signing identity.
@@ -116,3 +116,34 @@ the canonical history was merged into that same fork network before the companio
 was implemented, rather than recreating the GitHub fork.
 Canonical main and dev have identical trees. New source layout, API, toolchain and
 disabled broken Play Store registration take precedence over the old split apps.
+
+## Authorized release and phone validation extension: 2026-10-03
+
+The user explicitly authorized publishing v0.1.0 and testing through ObtainX after
+reviewing the verified APK/release-note proposal. This supersedes the earlier
+no-release boundary for this companion release only.
+
+- R10: Publish the verified signed 0.1.0 APK as a normal GitHub release, verify the
+  asset bytes/signature and register this repository in existing phone ObtainX.
+  Install through ObtainX on the authorized Samsung SM-F966B user 0. Preserve
+  existing ObtainX entries, Morphe installation/signing keys and unrelated apps.
+- R11: Simulate Showly's download/import workflow starting in installed Morphe:
+  select its required Showly version, open its link through LinkSheet, resolve with
+  the companion's private Byparr setting, download/validate the original and verify
+  that existing Morphe reads and selects Showly. Stop before patching/installing the
+  target. Preserve existing Morphe queue and network settings.
+- R12: Record real phone results, failures and exact limits; commit/push supporting
+  documentation. Clean only expendable test files, preserving APK and evidence.
+
+4. Release and ObtainX installation - ACTIVE (R10)
+   - Release has the verified APK; remote asset equals the local deliverable.
+   - Existing ObtainX tracks this repository and installs the expected companion
+     package/version on the authorized phone.
+5. Showly phone workflow and reconciliation - NOT STARTED (R11, R12)
+   - Morphe's real Showly link traverses LinkSheet, Byparr and original download.
+   - Existing Morphe reads the original Showly file and displays the selected
+     app/version. No target patch/install or changes to its signing identity occur.
+   - Evidence, limits, cleanup and source documentation are reconciled.
+
+Only Stage 4 is ACTIVE. Existing implementation stages remain COMPLETE. No required
+tracked deferrals exist. New phone-validation completion is not yet claimed.

@@ -290,3 +290,9 @@ The task emulator, fixture server and idle task Gradle daemon are stopped. Both
 exact registered temporary roots were removed through reviewed cleanup tickets;
 the signed deliverable and required evidence remain. Physical devices and user
 browser sessions were unchanged.
+
+[v0.3.0](https://github.com/Darkaxt/morphe-manager-downloaders/releases/tag/v0.3.0)
+is published as the normal/latest release targeting verified source commit
+`d10ba91513c31a851a0d5fa7caa62aa8e3d57099`. Its only asset is the signed APK above.
+An independent download matched the local tested deliverable byte-for-byte;
+GitHub's asset size and SHA-256 digest also match. Stage 12 is COMPLETE.

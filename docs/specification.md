@@ -415,7 +415,7 @@ f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074.
 The new installed page handler resolves Uptodown app/build URLs and excludes its
 attachment URL. B4 is resolved. No Stage 9 blocker or tracked deferral remains.
 
-Stage 12 — release 0.3.0: ACTIVE (R19/R20). Depends on Stage 9 COMPLETE.
+Stage 12 — release 0.3.0: COMPLETE (R19/R20). Depends on Stage 9 COMPLETE.
 Include Uptodown plus the verified metadata dialog and Cancel/Save labels. Verify
 focused integrated contracts, signed release build/lint, original certificate,
 0.2.0 in-place upgrade with endpoint persistence, accurate documentation/release
@@ -424,3 +424,16 @@ asset byte equality. The user's new release request authorizes publication.
 Stage 5 remains BLOCKED on its independent physical-phone workflow; the release
 uses isolated emulator verification, consistent with the established release
 boundary, and does not claim physical-phone or patched-app installation proof.
+
+Stage 12 closure (2026-10-04): focused companion JVM and Android capture,
+metadata, lifecycle, presentation, URI and process-restoration checks pass.
+The final signed release passed a fresh real Uptodown Showly workflow and a
+0.2.0 in-place upgrade preserving the UI-saved endpoint. Release build/lint and
+unchanged certificate verification pass. Documentation and release notes match
+the verified behavior; exact temporary roots were removed through reviewed
+cleanup tickets after stopping task processes and preserving APK/evidence.
+Source commit `d10ba91513c31a851a0d5fa7caa62aa8e3d57099` was pushed and matched
+independently on origin. Normal/latest v0.3.0 targets that source; its only APK
+asset was independently downloaded and matched the verified local artifact
+byte-for-byte and GitHub's SHA-256 digest. All R20 release criteria and R19's
+inclusion pass. No required blocker or tracked deferral remains in this scope.

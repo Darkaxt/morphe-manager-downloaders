@@ -29,6 +29,8 @@ class ProcessPersistenceTest {
     @Test fun aPreparePendingDownload() {
         val store = Downloads(context)
         store.cancel()
+        context.getSharedPreferences("byparr", Context.MODE_PRIVATE).edit()
+            .putString("endpoint", "http://10.0.2.2:8765/v1").commit()
         context.getSharedPreferences("browser", Context.MODE_PRIVATE).edit().clear().commit()
         boundary("slow-reset")
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use {

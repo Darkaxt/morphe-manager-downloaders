@@ -1,6 +1,5 @@
 package app.morphe.manager.downloaders
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.content.*
@@ -8,34 +7,35 @@ import android.database.ContentObserver
 import android.graphics.Color
 import android.net.Uri
 import android.os.*
+import android.text.InputType
 import android.view.View
-import android.webkit.*
 import android.widget.*
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import org.json.JSONObject
-import org.json.JSONTokener
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
-    private lateinit var web: WebView
     private lateinit var status: TextView
     private lateinit var progress: ProgressBar
     private lateinit var open: Button
     private lateinit var cancel: Button
+    private lateinit var choices: LinearLayout
     private lateinit var store: Downloads
-    private var awaitingDownload: Boolean
-        get() = getSharedPreferences("browser", MODE_PRIVATE).getBoolean("awaitingDownload", false)
-        set(value) { getSharedPreferences("browser", MODE_PRIVATE).edit().putBoolean("awaitingDownload", value).commit() }
     private val policy = ApkMirrorPolicy(BuildConfig.DEBUG)
     private val executor = Executors.newSingleThreadExecutor()
+    private val handler = Handler(Looper.getMainLooper())
+    private val browserPrefs by lazy { getSharedPreferences("browser", MODE_PRIVATE) }
+    private val serverPrefs by lazy { getSharedPreferences("byparr", MODE_PRIVATE) }
+    private var pageClient: ByparrClient? = null
+    private var requestGeneration = 0
+    private var loadingPage = false
     private var validating = false
     private var resumed = false
-    private var lastAutomaticUrl: String? = null
-    private val handler = Handler(Looper.getMainLooper())
+    private var settingsDialog: AlertDialog? = null
+    private var lastPromptedFailure: Long? = null
     private val observer = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) { refreshDownload() }
     }
@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         store = Downloads(this)
@@ -73,63 +72,32 @@ class MainActivity : ComponentActivity() {
         }
         open = button(R.string.open_morphe) { shareToMorphe() }.apply { isEnabled = false }
         button(R.string.share) { shareChooser() }.apply { id = SHARE_ID }
-        cancel = button(R.string.cancel) { store.cancel(); refreshDownload() }
+        cancel = button(R.string.cancel) {
+            if (loadingPage) {
+                cancelPage(); browserPrefs.edit().putBoolean("awaitingDownload", false).commit()
+                status.text = "Page request cancelled."; refreshDownload()
+            } else { store.cancel(); refreshDownload() }
+        }
         root.addView(actions)
-        val next = Button(this).apply {
-            setText(R.string.continue_download)
-            setOnClickListener {
-                if (store.id < 0 || store.ready || store.error != null) { awaitingDownload = true; inspectPage() }
-            }
-        }
-        root.addView(next)
-        web = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = false
-            settings.allowContentAccess = false
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            webChromeClient = WebChromeClient()
-            webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                    if (!request.isForMainFrame) return false
-                    val allowed = policy.pageUrl(request.url.toString())
-                    if (allowed == null) { status.text = "This companion supports APKMirror links only."; return true }
-                    if (request.hasGesture() && (store.id < 0 || store.ready || store.error != null)) awaitingDownload = true
-                    if (allowed != request.url.toString()) { view.loadUrl(allowed); return true }
-                    return false
-                }
-                override fun onPageFinished(view: WebView, url: String) {
-                    getSharedPreferences("browser", MODE_PRIVATE).edit().putString("url", url).apply()
-                    if (awaitingDownload && (store.id < 0 || store.ready || store.error != null)) inspectPage()
-                }
-                override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                    if (request.isForMainFrame) status.text = "APKMirror could not load: ${error.description}"
-                }
-                // Certificate failures use WebView's default cancellation. Never bypass SSL checks.
-            }
-            setDownloadListener { url, agent, disposition, mime, _ ->
-                if (!awaitingDownload) return@setDownloadListener
-                if (!policy.downloadUrl(url)) { status.text = "APKMirror returned an unsupported download host." }
-                else try {
-                    store.enqueue(url, agent, disposition, mime, this.url.orEmpty())
-                    awaitingDownload = false
-                    stopLoading(); refreshDownload()
-                } catch (e: Exception) { status.text = e.message ?: "Download could not start." }
-            }
-        }
-        root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(Button(this).apply {
+            setText(R.string.server_settings); id = SETTINGS_ID
+            setOnClickListener { showServerSettings() }
+        })
+        choices = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(ScrollView(this).apply { addView(choices) }, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(root)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() { goBack() }
+            override fun handleOnBackPressed() { finish() }
         })
-        if (savedInstanceState == null || web.restoreState(savedInstanceState) == null) {
-            if (!openIncoming(intent)) {
-                getSharedPreferences("browser", MODE_PRIVATE).getString("url", null)?.let {
-                    policy.pageUrl(it)?.let(web::loadUrl)
-                }
-            }
+        if (!openIncoming(intent)) {
+            val url = browserPrefs.getString("url", null)
+            if (browserPrefs.getBoolean("awaitingDownload", false) && url != null &&
+                (store.id < 0 || store.ready || store.error != null)) loadPage(url)
+            else if (serverPrefs.getString("endpoint", null) == null) showServerSettings()
+            else browserPrefs.getString("pageError", null)?.let { status.text = it; showServerSettings(it) }
         }
     }
+
     private fun openIncoming(value: Intent): Boolean {
         val raw = value.dataString ?: return false
         val url = policy.pageUrl(raw)
@@ -137,17 +105,16 @@ class MainActivity : ComponentActivity() {
         if (store.id >= 0 && !store.ready && store.error == null) {
             status.text = "Finish or cancel the current download before opening another link."; return true
         }
-        lastAutomaticUrl = null
-        awaitingDownload = true
-        web.loadUrl(url)
+        cancelPage()
+        browserPrefs.edit().putString("url", url).putBoolean("awaitingDownload", true).commit()
+        loadPage(url)
         return true
     }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); openIncoming(intent) }
-    override fun onSaveInstanceState(outState: Bundle) { web.saveState(outState); super.onSaveInstanceState(outState) }
     override fun onResume() {
         super.onResume(); resumed = true
-        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        ContextCompat.registerReceiver(this, completion, filter, ContextCompat.RECEIVER_EXPORTED)
+        ContextCompat.registerReceiver(this, completion, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            ContextCompat.RECEIVER_EXPORTED)
         contentResolver.registerContentObserver(Uri.parse("content://downloads/my_downloads"), true, observer)
         refreshDownload()
     }
@@ -155,47 +122,130 @@ class MainActivity : ComponentActivity() {
         resumed = false; unregisterReceiver(completion); contentResolver.unregisterContentObserver(observer)
         super.onPause()
     }
-    override fun onDestroy() { web.destroy(); executor.shutdown(); super.onDestroy() }
-    private fun goBack() { if (web.canGoBack()) web.goBack() else finish() }
+    override fun onDestroy() {
+        cancelPage(); settingsDialog?.dismiss(); executor.shutdown(); super.onDestroy()
+    }
 
-    private fun inspectPage() {
-        if (!awaitingDownload || policy.pageUrl(web.url.orEmpty()) == null) return
-        val script = assets.open("apkmirror.js").bufferedReader().use { it.readText() }
-        web.evaluateJavascript(script) { result ->
-            if (isDestroyed || !awaitingDownload) return@evaluateJavascript
-            try {
-                val page = JSONObject(JSONTokener(result).nextValue() as String)
-                val next = page.optString("next").takeUnless { it.isBlank() || it == "null" }
-                when {
-                    page.optBoolean("challenge") -> status.text = "Complete APKMirror's verification below."
-                    next != null && policy.pageUrl(next) != null && next != lastAutomaticUrl -> {
-                        lastAutomaticUrl = next; status.text = "Following APKMirror's download step…"
-                        // Navigate in the page's browser context so redirects retain the normal Referer.
-                        web.evaluateJavascript("window.location.assign(${JSONObject.quote(policy.pageUrl(next)!!)})", null)
-                    }
-                    page.optJSONArray("variants")?.length()?.let { it > 1 } == true ->
-                        status.text = "Choose the required APK variant below. The download continues automatically."
-                    else -> status.text = "Choose the required release or variant below."
-                }
-            } catch (_: Exception) { status.text = "Use APKMirror's download controls below." }
+    private fun cancelPage() {
+        requestGeneration++; pageClient?.cancel(); pageClient = null; loadingPage = false
+    }
+    private fun showServerSettings(failure: String? = null) {
+        if (isDestroyed || isFinishing || settingsDialog?.isShowing == true) return
+        val input = EditText(this).apply {
+            id = ENDPOINT_ID
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            isSingleLine = true; hint = "https://your-private-server:8191/v1"
+            setText(serverPrefs.getString("endpoint", ""))
         }
+        val dialog = AlertDialog.Builder(this).setTitle("Byparr server")
+            .setMessage((failure?.let { "$it\n\n" } ?: "") +
+                "Enter your private HTTPS Byparr API URL. The saved server resolves APKMirror pages; Android downloads the original file.")
+            .setView(input).setPositiveButton("Save and retry", null).setNegativeButton("Keep current state", null)
+            .create()
+        settingsDialog = dialog
+        dialog.setOnDismissListener { if (settingsDialog === dialog) settingsDialog = null }
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val endpoint = ByparrEndpoint.normalize(input.text.toString(), BuildConfig.DEBUG)
+                if (endpoint == null) { input.error = "Enter a HTTPS server URL without credentials, query or fragment."; return@setOnClickListener }
+                serverPrefs.edit().putString("endpoint", endpoint).commit()
+                dialog.dismiss()
+                val url = browserPrefs.getString("url", null)
+                if (url != null && (store.id < 0 || store.ready || store.error != null)) {
+                    cancelPage()
+                    browserPrefs.edit().putBoolean("awaitingDownload", true).commit()
+                    loadPage(url)
+                } else if (store.id < 0) status.text = getString(R.string.start_hint)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun loadPage(url: String) {
+        if (loadingPage || isDestroyed) return
+        val endpoint = serverPrefs.getString("endpoint", null)
+        if (endpoint == null) { status.text = "Configure your Byparr server to continue."; showServerSettings(); return }
+        val allowed = policy.pageUrl(url) ?: run { status.text = "Only APKMirror page links are supported."; return }
+        browserPrefs.edit().putString("url", allowed).putBoolean("awaitingDownload", true).remove("pageError").commit()
+        choices.removeAllViews()
+        loadingPage = true; progress.isIndeterminate = true
+        status.text = "Resolving APKMirror through Byparr…"
+        refreshDownload()
+        val generation = ++requestGeneration
+        val client = ByparrClient(BuildConfig.DEBUG)
+        pageClient = client
+        executor.execute {
+            try {
+                val page = client.fetch(endpoint, allowed)
+                val next = page.content.next
+                val attachment = if (next != null && page.content.isAttachment(next)) client.attachment(page, next) else null
+                handler.post {
+                    if (isDestroyed || generation != requestGeneration) return@post
+                    pageClient = null; loadingPage = false; progress.isIndeterminate = false
+                    if (attachment != null) {
+                        try {
+                            store.enqueue(attachment.url, page.userAgent, attachment.disposition, attachment.mime,
+                                page.content.url, attachment.cookieHeader)
+                            browserPrefs.edit().putBoolean("awaitingDownload", false).commit()
+                            refreshDownload()
+                        } catch (e: Exception) { pageFailed(e.message ?: "Download could not start.") }
+                    } else if (next != null) {
+                        loadPage(next)
+                    } else {
+                        cancel.visibility = View.GONE
+                        status.text = "Choose the required release or APK variant below."
+                        choices.addView(TextView(this).apply { text = page.content.title; textSize = 18f; setPadding(20, 20, 20, 20) })
+                        for (choice in page.content.choices) choices.addView(Button(this).apply {
+                            text = choice.label; isAllCaps = false
+                            setOnClickListener { loadPage(choice.url) }
+                        })
+                        if (page.content.choices.isEmpty()) pageFailed("Byparr returned no usable APKMirror download choices.")
+                    }
+                }
+            } catch (e: Exception) {
+                handler.post {
+                    if (isDestroyed || generation != requestGeneration) return@post
+                    pageClient = null; loadingPage = false
+                    pageFailed(e.message ?: "Byparr could not resolve the page.")
+                }
+            }
+        }
+    }
+    private fun pageFailed(message: String) {
+        browserPrefs.edit().putBoolean("awaitingDownload", false).putString("pageError", message).commit()
+        progress.isIndeterminate = false; cancel.visibility = View.GONE
+        status.text = message
+        showServerSettings(message)
     }
 
     private fun refreshDownload() {
         if (isDestroyed) return
-        open.isEnabled = store.ready && store.file?.isFile == true
+        open.isEnabled = store.ready && store.file?.isFile == true && !loadingPage &&
+            !browserPrefs.getBoolean("awaitingDownload", false)
         findViewById<Button>(SHARE_ID).isEnabled = open.isEnabled
-        cancel.visibility = if (store.id >= 0 && !store.ready) View.VISIBLE else View.GONE
+        cancel.setText(if (loadingPage) R.string.cancel_page else R.string.cancel)
+        cancel.visibility = if (loadingPage || (store.id >= 0 && !store.ready)) View.VISIBLE else View.GONE
+        if (loadingPage || browserPrefs.getBoolean("awaitingDownload", false)) return
+        browserPrefs.getString("pageError", null)?.let {
+            status.text = it; progress.isIndeterminate = false
+            return
+        }
         if (store.ready) {
             progress.isIndeterminate = false; progress.progress = 100
             status.text = "Ready: ${store.displayName}\nOriginal file preserved. Morphe handles patching in Expert mode."
             if (resumed && !store.autoOpened) shareToMorphe()
             return
         }
-        store.error?.let { status.text = it; progress.isIndeterminate = false; return }
+        store.error?.let {
+            status.text = it; progress.isIndeterminate = false
+            if (resumed && lastPromptedFailure != store.id) {
+                lastPromptedFailure = store.id; showServerSettings(it)
+            }
+            return
+        }
         val state = store.query() ?: run {
             progress.isIndeterminate = false
-            if (store.id >= 0) { store.fail("The system download was removed. Open the APKMirror link to download it again."); refreshDownload() }
+            if (store.id >= 0) { store.fail("The system download was removed. Retry the APKMirror link."); refreshDownload() }
             return
         }
         when (state.status) {
@@ -207,7 +257,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             DownloadManager.STATUS_FAILED -> {
-                store.fail("Download failed (Android reason ${state.reason}). Open the APKMirror link to try again.")
+                store.fail("Download failed (Android reason ${state.reason}). Check the server URL and retry.")
                 refreshDownload()
             }
             else -> {
@@ -235,5 +285,9 @@ class MainActivity : ComponentActivity() {
         val file = store.file?.takeIf { store.ready && it.isFile } ?: return
         startActivity(Intent.createChooser(MorpheHandoff.intent(this, file, store.displayName, store.format, null), "Share original APK"))
     }
-    companion object { private const val SHARE_ID = 10001 }
+    companion object {
+        private const val SHARE_ID = 10001
+        const val SETTINGS_ID = 10002
+        const val ENDPOINT_ID = 10003
+    }
 }

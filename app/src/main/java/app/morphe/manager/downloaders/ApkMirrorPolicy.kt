@@ -26,6 +26,9 @@ class ApkMirrorPolicy(private val debugFixtures: Boolean) {
     }
     fun downloadUrl(value: String): Boolean {
         val uri = parse(value) ?: return false
-        return fixture(uri) || (mirror(uri) && uri.scheme == "https" && uri.port != 80)
+        val attachmentBucket = uri.host == "eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com" &&
+            uri.rawPath.orEmpty().startsWith("/downloadprod/wp-content/uploads/") &&
+            uri.rawUserInfo == null && uri.port in listOf(-1, 443)
+        return fixture(uri) || (uri.scheme == "https" && ((mirror(uri) && uri.port != 80) || attachmentBucket))
     }
 }

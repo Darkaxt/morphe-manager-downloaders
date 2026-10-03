@@ -5,11 +5,10 @@ Morphe opens an APKMirror link. It follows unambiguous download steps, downloads
 an original APK or APKM and shares it back to Morphe using a temporary content
 URI grant. Enable Morphe's **Expert mode** first; this is the default workflow.
 
-**Status:** consolidation and local Android verification are complete. Live
-APKMirror page-to-file verification is blocked by Cloudflare human verification.
-This is a local verification build, not a published release or a claim of complete
-APKMirror compatibility. See [verification](docs/verification.md) and the
-[authoritative specification](docs/specification.md).
+APKMirror page resolution uses a configurable private **Byparr server**. The
+companion has a native interface and no embedded browser. A real APKMirror APKM
+was downloaded and imported into existing Morphe on the isolated Android emulator.
+See [verification](docs/verification.md) and the [specification](docs/specification.md).
 
 ## Use
 
@@ -18,18 +17,28 @@ APKMirror compatibility. See [verification](docs/verification.md) and the
 3. Open Morphe's APKMirror download link and select **Morphe Manager Downloaders**
    in LinkSheet's app chooser. Its handlers are limited to APKMirror domains;
    it does not claim every web link or replace your general-purpose browser.
-4. Choose a variant if more than one exists. Complete any site verification in
-   the displayed page, then use **Continue automatically** if needed.
-5. After validation, the original file opens in Morphe. **Open in Morphe** repeats
-   that handoff; **Share file** offers another receiving app. If Morphe is absent,
-   the companion explains the requirement and offers sharing or keeping the file.
+4. When prompted, enter your private HTTPS Byparr API URL, for example
+   `https://your-server:8191/v1`. The setting persists. Your phone must be able to
+   reach the server (for example through your existing private network).
+5. Choose the required release/variant if more than one exists. Unambiguous
+   download steps continue automatically.
+6. After validation, the original file opens in Morphe. **Open in Morphe** repeats
+   the handoff; **Share file** offers another receiving app. Morphe may display its
+   own bundle/version warnings before importing a file.
+
+There is no public default server. **Byparr server** edits the setting at any time;
+missing settings and failed page/download requests offer **Save and retry**.
+Retrying is explicit. Check the displayed failure as well as the URL: an unresolved
+server challenge, missing release or client download rejection cannot necessarily
+be fixed by changing the endpoint.
 
 The companion has its own package (`app.morphe.manager.downloaders`) and signing
 identity. It never patches, signs or installs downloaded apps and does not replace
 Morphe or touch Morphe's patch-signing keystore. Existing patched installations
 keep their existing signing identity because the existing manager does the patching.
 
-APKMirror can require manual variant selection or security checks. Android owns
+APKMirror can require manual variant selection. Byparr handles page security checks;
+an unresolved challenge is reported as a failure. Android owns
 transfers; the companion restores the recorded transfer when reopened. Android
 may pause or fail a transfer according to network, server or system conditions.
 Failures are displayed for an explicit new download. Successful original files
@@ -56,7 +65,7 @@ not Morphe's patch-signing key. You can supply `-SigningRoot` for your own locat
 
 ## Android verification
 
-Use an isolated emulator, not a physical device. Start the fixture server with a
+Use an isolated emulator for the automated verification script. Start the fixture server with a
 built debug APK, install the debug app and its Android test APK, then run:
 
 ```powershell
@@ -65,9 +74,22 @@ python scripts/fixture-server.py --apk <absolute-debug-apk-path>
 ```
 
 The fixture server binds host loopback. Only debug builds accept emulator loopback
-HTTP URLs; release builds accept APKMirror HTTPS only. Fixtures verify the Android
+HTTP URLs; release builds require HTTPS for server settings and download requests. Fixtures verify the Android
 transfer and URI contracts and do not substitute for a successful real-site check.
 The script verifies an ongoing download across separate instrumentation processes.
+
+The optional `ByparrLiveTest` takes instrumentation arguments `byparrEndpoint`,
+`apkMirrorUrl` (a real APKM variant URL), and optionally `expectedBaseMd5` (the
+listed base.apk hash). It tests the actual server, native attachment redirect and
+Android download boundary. `MorpheHandoffSmokeTest` opens the resulting original;
+inspect Morphe's import screen independently before claiming successful import.
+
+The API transport is POST `/v1` with `cmd: request.get`. Upstream `request.post`
+is not needed by the verified APKMirror flow and is not yet invoked. Cookies and
+user agent are forwarded together, with cookies restricted to their domain/path.
+Byparr resolves HTML; Android downloads the attachment. Session clearance may be
+bound to the server's outgoing IP, so success with one server/network does not
+establish universal portability. [Integration details](docs/byparr-assessment.md).
 
 ## Sources and license
 

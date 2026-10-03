@@ -27,6 +27,19 @@ class DownloadContractTest {
         assertNotNull(ApkMirrorPolicy(true).pageUrl("http://10.0.2.2:8765/release"))
         assertFalse(ApkMirrorPolicy(true).downloadUrl("http://192.168.1.1/file.apk"))
     }
+    @Test fun acceptsOnlyTheObservedApkMirrorAttachmentBucket() {
+        val policy = ApkMirrorPolicy(false)
+        val cdn = "eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com"
+        val url = "https://$cdn/downloadprod/wp-content/uploads/2026/10/file.apkm?signature=value"
+        assertTrue(policy.downloadUrl(url))
+        assertNull(policy.pageUrl(url))
+        for (invalid in listOf("http://$cdn/downloadprod/wp-content/uploads/file.apkm",
+            "https://other.r2.cloudflarestorage.com/downloadprod/wp-content/uploads/file.apkm",
+            "https://$cdn/another-bucket/file.apkm", "https://user@$cdn/downloadprod/wp-content/uploads/file.apkm",
+            "https://$cdn:444/downloadprod/wp-content/uploads/file.apkm")) {
+            assertFalse(invalid, policy.downloadUrl(invalid))
+        }
+    }
     @Test fun detectsOriginalArchivesAndRejectsHtmlAndIncompleteBundles() {
         fun archive(vararg names: String): File {
             val file = File.createTempFile("morphe-contract", ".bin")

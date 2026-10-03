@@ -25,6 +25,9 @@ class VerticalSliceTest {
         val context = instrumentation.targetContext
         val store = Downloads(context)
         store.cancel()
+        context.getSharedPreferences("byparr", Context.MODE_PRIVATE).edit()
+            .putString("endpoint", "http://10.0.2.2:8765/v1").commit()
+        context.getSharedPreferences("browser", Context.MODE_PRIVATE).edit().clear().commit()
         val prefs = context.getSharedPreferences("download", Context.MODE_PRIVATE)
         val downloaded = CountDownLatch(1)
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->

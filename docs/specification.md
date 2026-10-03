@@ -14,9 +14,10 @@ APK file handoff; this is the default workflow.
   Build a separately installable companion with its own package identity.
 - R3: Accept APKMirror HTTPS page links through Android VIEW/BROWSABLE handlers
   so LinkSheet can offer it. APKMirror is the companion's only supported site.
-- R4: Manage the APKMirror page-to-file workflow in its own WebView, automatically
-  follow unambiguous download steps and expose variant/security-check interaction
-  when required. Do not select an arbitrary variant or silently change versions.
+- R4: Scope change authorized 2026-10-03: manage APKMirror pages through Byparr only;
+  remove the companion's internal WebView. Follow unambiguous download steps and
+  expose manual variant choices. Reject unresolved challenges and wrong/not-found
+  page content. Do not select an arbitrary variant or silently change versions.
 - R5: Download the original APK/APKM using the browser session's required headers.
   Show download state, support explicit cancellation, retain downloads across
   activity/process recreation and validate archive content before offering it.
@@ -27,11 +28,21 @@ APK file handoff; this is the default workflow.
   chooser. Do not alter Morphe or its signing keystore.
 - R7: Produce a locally signed APK and document installation, LinkSheet selection,
   Expert mode, interaction limits, provenance, verification and signing identity.
-  No external release or physical-device installation is authorized.
+  No external release is authorized. On 2026-10-03 the user authorized live testing
+  on their connected phone (Samsung SM-F966B, serial RFCY80551LT), including installing
+  the companion and reaching existing Morphe's import screen. Do not use the Thor,
+  replace Morphe, patch/install the downloaded target, or alter its signing identity.
 - R8: Verify focused behavioral tests, Android build/lint, link resolution, archive
   download and URI handoff on an isolated emulator. Test the real APKMirror
   boundary; if externally unavailable record the precise unmet criterion rather
   than treating fixtures as live proof. Commit and push the verified source.
+- R9: User-authorized Byparr-only support (2026-10-03). Add a persisted,
+  configurable private HTTPS API endpoint and retain the original-file Morphe handoff.
+  Prompt for the server URL when no default/saved endpoint exists or the download
+  fails. Saving/retrying is explicit; do not add automatic retry loops.
+  Validate API/content results, restrict target navigation to APKMirror and process
+  one browser request at a time. Prove an original-file download across the actual
+  configured server boundary; do not claim a cookie/HTML response as file proof.
 
 ## Stages and acceptance criteria
 
@@ -39,12 +50,14 @@ APK file handoff; this is the default workflow.
    - Both source histories integrated, meaningful fork changes reconciled with
      the current source layout, no conflict markers; provenance recorded.
    - Consolidated downloader sources compile against the matching manager API.
-2. APKMirror vertical slice — BLOCKED (R2–R6)
+2. APKMirror vertical slice — COMPLETE (R2–R6, R9)
    - Link handler launches; a real APKMirror page reaches an original download;
      completed archive validates and is readable by a receiving Android app.
-   - Default share targets Morphe Expert mode; manual variant/challenge states
+   - Default share targets Morphe Expert mode; manual variant/error states
      stay usable and are accurately reported.
-3. Lifecycle, verification and delivery — BLOCKED (R5, R7, R8)
+   - Byparr setting persists, fails clearly when its API/content is invalid,
+     and participates in a real original-file download without replacing Morphe.
+3. Lifecycle, verification and delivery — ACTIVE (R5, R7, R8, R9)
    - Cancellation/failure/recreation behavior passes focused checks; release APK,
      lint, integration verification, documentation and source delivery complete.
 
@@ -56,33 +69,30 @@ sources from `api@1.0.0-dev.4` (b7e94efb). GitHub Packages returns HTTP 401 with
 available credentials; `scripts/build-manager-api.ps1` provides a pinned-source
 local verification build. No required tracked deferrals.
 
-Stage 2: the emulator fixture verified page traversal, session cookie/User-Agent/
-Referer forwarding, original APK download, archive validation and a separate
-installed Android app reading the URI with matching SHA-256, filename and MIME.
-The default intent targets Morphe. Official Morphe 1.33.0 imported the original
-fixture APK on the emulator and displayed its package in Expert-mode selection.
-Official LinkSheet 0.0.33 offered the companion and opened a real APKMirror URL in
-its WebView. The site's human-verification checkbox was displayed correctly.
-External blocker B1: the real APKMirror-page-to-download acceptance criterion
-cannot pass while APKMirror serves Cloudflare human verification in the available
-browser. User interaction has been requested. Resolution requires access to a real
-release page and a successful original-file download. Live selector compatibility
-and overall stage closure remain unverified; fixtures do not resolve B1. Stage 2
-is parked. Confirmation to click the displayed checkbox has also been requested.
+Stage 2 passed on 2026-10-03: the Byparr-only native companion resolved the actual
+YouTube 21.39.523 variant, followed its download landing page, resolved APKMirror's
+attachment redirect and downloaded the original 72,237,474-byte APKM using Android
+DownloadManager. Its base.apk MD5 matches APKMirror's published bundle entry
+(9a9a84346eba90a7a856d00525d11d31). Official Morphe 1.33.0 read the content URI,
+recognized the split bundle and version, and reached YouTube's Expert-mode patch
+selection. No patching or target installation occurred. Fixture verification covers
+manual variant selection, session headers, byte-preserving URI sharing and endpoint
+persistence/explicit retry. APKMirror LinkSheet handlers are unchanged and verified
+on the isolated emulator. All Stage 2 acceptance criteria pass.
 
-Stage 3 local acceptance criteria passed: cancellation, rejection of invalid files,
-activity recreation without duplicate transfers, recovery in a fresh process,
-archive/URL contracts, debug/release lint, locally signed APK, readable action
-layout, LinkSheet selection and actual Morphe Expert-mode import. Signing identity,
-usage and evidence are documented in `docs/verification.md`. Source delivery is
-being committed and pushed. B1 also prevents Stage 3's required final real-site
-integration verification, so this stage remains BLOCKED even after local source
-delivery. The unresolved condition is external and resolves only when the real
-page-to-file workflow passes. No required work is classified as a tracked deferral.
+B1 (Cloudflare loops in the former embedded WebView) is resolved by the expressly
+user-authorized Byparr-only design change. No companion WebView remains. The real
+server boundary and actual original-file workflow now pass, rather than substituting
+fixture results or a catalogue response. The API uses POST /v1 with request.get;
+the user's forthcoming upstream POST support is not required by this tested flow.
 
-Overall outcome is not COMPLETE. R1, R2, R3, R5, R6 and R7 have local evidence;
-R4's real download-step selection and R8's final real-site check remain blocked by
-B1. No external release or physical-device installation is authorized or performed.
+Stage 3 is ACTIVE for current-source regression checks, release build/lint,
+documentation, final specification reconciliation, commit and source push. No
+blockers or required tracked deferrals remain. Live proof applies to the isolated
+Android 15 emulator and the configured private HTTPS server. The previous phone
+WebView test looped; the new Byparr-only build has not been tested on that phone.
+
+Overall completion awaits Stage 3 closure. No external release is authorized.
 
 ## Consolidation decisions
 

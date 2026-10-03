@@ -1,5 +1,6 @@
 """Local Android integration fixture; never a production APKMirror substitute."""
 import argparse
+import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -16,6 +17,35 @@ def main():
     slow_started, slow_release = Event(), Event()
 
     class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if self.path == "/error/v1":
+                self.html("API unavailable", code=502)
+                return
+            if self.path != "/v1":
+                self.html("Not found", code=404)
+                return
+            request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            url = request["url"]
+            path = urlparse(url).path
+            pages = {
+                "/release/": '<a href="/release/one-android-apk-download/">Universal APK</a>',
+                "/release/one-android-apk-download/": '<a class="downloadButton" href="/download.php?id=fixture">DOWNLOAD APK</a>',
+                "/variants/": '<div class="table-row">arm64 <a href="/variants/one-android-apk-download/">APK</a></div>'
+                              '<div class="table-row">x86 <a href="/variants/two-android-apk-download/">APK</a></div>',
+                "/challenge/": '<div id="challenge-stage">Human verification required</div>',
+            }
+            title = "APKMirror fixture" if path in pages else "Page Not Found - APKMirror"
+            html = f'<html><head><title>{title}</title></head><body>{pages.get(path, "Not found")}</body></html>'
+            data = json.dumps({"status": "ok", "solution": {"status": 200, "url": url,
+                "userAgent": "Android Byparr fixture", "contentType": "text/html", "response": html,
+                "cookies": [{"name": "session", "value": "morphe_fixture", "domain": "10.0.2.2",
+                             "path": "/", "secure": False, "expires": -1}]}}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
         def do_GET(self):
             path = urlparse(self.path).path
             if path == "/release/":

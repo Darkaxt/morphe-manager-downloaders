@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ReVanced Manager: Downloaders</string>
+    <string name="apkmirror">APKMirror</string>
+    <string name="apkcombo">APKCombo</string>
+    <string name="apkpure">APKPure</string>
+    <string name="play_store">Play Store</string>
+</resources>

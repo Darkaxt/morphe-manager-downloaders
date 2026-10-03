@@ -27,6 +27,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var open: Button
     private lateinit var cancel: Button
+    private lateinit var retry: Button
+    private lateinit var browser: Button
     private lateinit var choices: LinearLayout
     private lateinit var store: Downloads
     private val policy = DownloadPolicy(BuildConfig.DEBUG)
@@ -40,7 +42,6 @@ class MainActivity : ComponentActivity() {
     private var validating = false
     private var resumed = false
     private var settingsDialog: AlertDialog? = null
-    private var lastPromptedFailure: Long? = null
     private val observer = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) { refreshDownload() }
     }
@@ -114,6 +115,21 @@ class MainActivity : ComponentActivity() {
                 status.text = "Page request cancelled."; refreshDownload()
             } else { store.cancel(); refreshDownload() }
         }
+        retry = button(R.string.retry) {
+            val url = retryUrl() ?: return@button
+            cancelPage()
+            if (store.error != null) store.cancel()
+            loadPage(url)
+        }.apply { visibility = View.GONE }
+        browser = button(R.string.open_browser) {
+            retryUrl()?.let { url ->
+                val view = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)
+                val chooser = Intent.createChooser(view, getString(R.string.open_browser))
+                    .putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(this, MainActivity::class.java)))
+                try { startActivity(chooser) }
+                catch (_: ActivityNotFoundException) { status.text = "Install a browser to open this download page." }
+            }
+        }.apply { visibility = View.GONE }
         root.addView(actions)
         val content = object : ScrollView(this) {
             override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -136,7 +152,7 @@ class MainActivity : ComponentActivity() {
             if (browserPrefs.getBoolean("awaitingDownload", false) && url != null &&
                 (store.id < 0 || store.ready || store.error != null)) loadPage(url)
             else if (serverPrefs.getString("endpoint", null) == null) showServerSettings()
-            else browserPrefs.getString("pageError", null)?.let { status.text = it; showServerSettings(it) }
+            else refreshDownload()
         }
     }
 
@@ -148,7 +164,8 @@ class MainActivity : ComponentActivity() {
             status.text = "Finish or cancel the current download before opening another link."; return true
         }
         cancelPage()
-        browserPrefs.edit().putString("url", url).putBoolean("awaitingDownload", true).remove("title").commit()
+        browserPrefs.edit().putString("url", url).putString("retryUrl", url)
+            .putBoolean("awaitingDownload", true).remove("title").remove("pageError").commit()
         apkTitle.text = "Preparing your APK"
         loadPage(url)
         return true
@@ -172,7 +189,7 @@ class MainActivity : ComponentActivity() {
     private fun cancelPage() {
         requestGeneration++; pageClient?.cancel(); pageClient = null; loadingPage = false
     }
-    private fun showServerSettings(failure: String? = null) {
+    private fun showServerSettings() {
         if (isDestroyed || isFinishing || settingsDialog?.isShowing == true) return
         val input = EditText(this).apply {
             id = ENDPOINT_ID
@@ -181,8 +198,7 @@ class MainActivity : ComponentActivity() {
             setText(serverPrefs.getString("endpoint", ""))
         }
         val dialog = AlertDialog.Builder(this).setTitle("Byparr server")
-            .setMessage((failure?.let { "$it\n\n" } ?: "") +
-                "Enter your private HTTPS Byparr API URL. The saved server resolves download pages; Android downloads the original file.")
+            .setMessage("Enter your private HTTPS Byparr API URL. The saved server resolves download pages; Android downloads the original file.")
             .setView(input).setPositiveButton("Save", null).setNegativeButton("Cancel", null)
             .create()
         settingsDialog = dialog
@@ -193,7 +209,7 @@ class MainActivity : ComponentActivity() {
                 if (endpoint == null) { input.error = "Enter a HTTPS server URL without credentials, query or fragment."; return@setOnClickListener }
                 serverPrefs.edit().putString("endpoint", endpoint).commit()
                 dialog.dismiss()
-                val url = browserPrefs.getString("url", null)
+                val url = retryUrl()
                 if (url != null && (store.id < 0 || store.ready || store.error != null)) {
                     cancelPage()
                     browserPrefs.edit().putBoolean("awaitingDownload", true).commit()
@@ -210,8 +226,11 @@ class MainActivity : ComponentActivity() {
         if (endpoint == null) { status.text = "Configure your Byparr server to continue."; showServerSettings(); return }
         val allowed = if (resolvedPage != null && policy.downloadUrl(url, resolvedPage.content.source)) url else
             policy.pageUrl(url) ?: run { status.text = "Open a supported download-site link."; return }
-        browserPrefs.edit().putString("url", resolvedPage?.content?.url ?: allowed)
-            .putBoolean("awaitingDownload", true).remove("pageError").commit()
+        val edit = browserPrefs.edit().putString("url", resolvedPage?.content?.url ?: allowed)
+            .putBoolean("awaitingDownload", true).remove("pageError")
+        if (resolvedPage == null && !(policy.source(allowed) == DownloadSource.APK_MIRROR &&
+                java.net.URI(allowed).path.trimEnd('/').endsWith("/download"))) edit.putString("retryUrl", allowed)
+        edit.commit()
         choices.removeAllViews()
         loadingPage = true; progress.isIndeterminate = true
         status.text = if (resolvedPage == null) "Contacting Byparr service…" else "Resolving the download link…"
@@ -266,20 +285,34 @@ class MainActivity : ComponentActivity() {
         browserPrefs.edit().putBoolean("awaitingDownload", false).putString("pageError", message).commit()
         progress.isIndeterminate = false; cancel.visibility = View.GONE
         status.text = message
-        showServerSettings(message)
+        refreshDownload()
+    }
+
+    private fun retryUrl(): String? {
+        val current = browserPrefs.getString("retryUrl", null) ?: browserPrefs.getString("url", null) ?: return null
+        // Re-resolve APKMirror's chosen variant instead of reusing an expiring landing key.
+        val uri = java.net.URI(current)
+        return if (policy.source(current) == DownloadSource.APK_MIRROR && uri.path.trimEnd('/').endsWith("/download"))
+            uri.resolve(uri.rawPath.trimEnd('/').removeSuffix("/download") + "/").toString()
+        else current
     }
 
     private fun refreshDownload() {
         if (isDestroyed) return
         apkDetails.visibility = View.GONE
         apkTitle.gravity = Gravity.START
+        val failed = !loadingPage && !browserPrefs.getBoolean("awaitingDownload", false) &&
+            (browserPrefs.getString("pageError", null) != null || store.error != null)
         open.isEnabled = store.ready && store.file?.isFile == true && !loadingPage &&
-            !browserPrefs.getBoolean("awaitingDownload", false)
+            !browserPrefs.getBoolean("awaitingDownload", false) && !failed
         findViewById<Button>(SHARE_ID).isEnabled = open.isEnabled
         open.visibility = if (open.isEnabled) View.VISIBLE else View.GONE
         findViewById<Button>(SHARE_ID).visibility = open.visibility
         cancel.setText(if (loadingPage) R.string.cancel_page else R.string.cancel)
         cancel.visibility = if (loadingPage || (store.id >= 0 && !store.ready)) View.VISIBLE else View.GONE
+        retry.visibility = if (failed && retryUrl() != null) View.VISIBLE else View.GONE
+        browser.visibility = retry.visibility
+        if (failed) cancel.visibility = View.GONE
         if (loadingPage || browserPrefs.getBoolean("awaitingDownload", false)) return
         browserPrefs.getString("pageError", null)?.let {
             status.text = it; progress.isIndeterminate = false
@@ -313,9 +346,6 @@ class MainActivity : ComponentActivity() {
         }
         store.error?.let {
             status.text = it; progress.isIndeterminate = false
-            if (resumed && lastPromptedFailure != store.id) {
-                lastPromptedFailure = store.id; showServerSettings(it)
-            }
             return
         }
         val state = store.query() ?: run {
@@ -332,7 +362,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             DownloadManager.STATUS_FAILED -> {
-                store.fail("Download failed (Android reason ${state.reason}). Check the server URL and retry.")
+                store.fail("Download failed (Android reason ${state.reason}).")
                 refreshDownload()
             }
             else -> {

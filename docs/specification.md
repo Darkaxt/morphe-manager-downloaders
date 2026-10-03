@@ -437,3 +437,73 @@ independently on origin. Normal/latest v0.3.0 targets that source; its only APK
 asset was independently downloaded and matched the verified local artifact
 byte-for-byte and GitHub's SHA-256 digest. All R20 release criteria and R19's
 inclusion pass. No required blocker or tracked deferral remains in this scope.
+
+## R21: Connected-phone APKMirror failure (2026-10-04)
+
+The user connected the phone for diagnosis and correction of the current failure.
+Trace the exact YouTube 21.16.256 APKMirror request on Samsung SM-F966B before
+changing production behavior. Preserve the saved Byparr endpoint, existing Morphe,
+patching key, patched applications and unrelated phone/network settings. Test only
+the companion workflow; do not patch or install the downloaded YouTube original.
+Correct the demonstrated cause, preserving exact variant selection, original
+bytes, supported-host/header/cookie policy and explicit cancellation. Reuse the
+deployed generic Byparr interface if required; do not alter its deployment.
+
+Stage 13 — APKMirror phone correction: BLOCKED (R21). Acceptance: reproduce and
+attribute the failed hop; regression checks exercise the demonstrated cause;
+the same phone/page reaches validated original readiness with correct metadata
+and readable URI bytes; focused existing-source/lifecycle contracts and signed
+build checks pass; settings/signing identity remain intact; document, clean
+temporary outputs and commit the verified correction. No new external release
+is authorized by this diagnostic/correction request.
+
+R22 (same stage, authorized during diagnosis): request failures stay in the
+standard compact download dialog, showing the actual error plus `Retry` and
+`Open in Browser`. Retry explicitly resolves a fresh session for the selected
+page/build. Browser fallback opens that source page externally, excluding this
+companion from its chooser. The cog remains the entry to Byparr settings; retain
+the initial configuration prompt only when no endpoint exists. Apply the actions
+to page, attachment and system-download errors, persist error presentation across
+recreation, and never retry automatically. Verify the actions, no unsolicited
+settings prompt, selected URL, cancellation and endpoint preservation.
+
+Stage 13 reconciliation (2026-10-04): R22 is implemented and verified. Failures
+remain inline across recreation, Retry uses the selected source page with a fresh
+session, expired APKMirror landing keys are discarded, and the external chooser
+excludes the companion. The cog and first-use setup still work. A failed new
+request cannot offer the previous completed APK. Focused source, lifecycle,
+metadata and failure-action checks pass. Signed local 0.3.1 (code 5), release
+build/lint, original certificate and 0.3.0 -> 0.3.1 saved-endpoint upgrade pass.
+The local artifact contains the verified R22 changes; it does not claim an R21
+automatic-resolution correction or a new external release.
+
+B5 (external): R21's real browser resolution/download criterion cannot currently
+pass. Native `download.php` returned HTTP 403 with Cloudflare challenge headers;
+Helium verified its normal 302 storage redirect. Deployed Byparr browser-capture
+attempts timed out during its Cloudflare check; a no-op script and ordinary page
+GETs succeeded. Redirect response capture also returned HTTP 502 when reading a
+redirect body. The exact observations and required proof are recorded in
+`apkmirror-byparr-handoff.md`. Resolution requires a successful live capture of
+the exact APK's signed attachment using the original endpoint, followed by the
+companion correction and regression/integration checks. The user has reserved
+Byparr extension/deployment work for its owner. R21 remains unsatisfied.
+
+B6 (external): R21's same-phone original-readiness/URI acceptance criterion
+cannot be verified while Samsung SM-F966B is disconnected. Resolution requires
+that phone to be reconnected after B5 is resolved and a verified correction is
+available. Its installed companion, Morphe, keys, apps and network settings were
+preserved. The temporary diagnostic test package/file may still be on the phone
+and require cleanup on reconnection. No required tracked deferral was created;
+Stage 13 and the automatic APKMirror correction remain incomplete.
+
+R23 (all remaining work, 2026-10-04): subsequent Gradle commands must use the
+host-wide Windows mutex `Local\Darka.AndroidGradleBuildGate`, held by their
+supervising process from before checks for other active/ambiguous builds until
+the command exits. Wait for completion without interrupting other builds or
+stealing the lock. Start with two workers, no parallel execution, explicit
+3 GiB Gradle/Kotlin heaps and preserved required JVM arguments. Bound forked
+test/native concurrency and coordinate memory-heavy verification. Evaluate
+in-process Kotlin compilation against this project's actual plugin versions and
+required behavior. Raise a budget only after diagnosing an actual memory
+failure. Report the actual profile and gate acquisition for the next required
+focused build/test; do not rerun unaffected verification merely to exercise it.

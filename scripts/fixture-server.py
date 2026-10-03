@@ -15,9 +15,17 @@ def main():
     args = parser.parse_args()
     payload = Path(args.apk).read_bytes()
     slow_started, slow_release = Event(), Event()
+    retry_requests = 0
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):
+            nonlocal retry_requests
+            if self.path == "/retry/v1":
+                retry_requests += 1
+                if retry_requests == 1:
+                    self.html("API unavailable", code=503)
+                    return
+                self.path = "/v1"
             if self.path == "/error/v1":
                 self.html("API unavailable", code=502)
                 return
@@ -49,6 +57,11 @@ def main():
             self.wfile.write(data)
 
         def do_GET(self):
+            nonlocal retry_requests
+            if self.path == "/retry-reset":
+                retry_requests = 0
+                self.html("Reset")
+                return
             path = urlparse(self.path).path
             if path == "/release/":
                 self.html('<a href="/release/one-android-apk-download/">Universal APK</a>', cookie=True)

@@ -296,3 +296,45 @@ is published as the normal/latest release targeting verified source commit
 `d10ba91513c31a851a0d5fa7caa62aa8e3d57099`. Its only asset is the signed APK above.
 An independent download matched the local tested deliverable byte-for-byte;
 GitHub's asset size and SHA-256 digest also match. Stage 12 is COMPLETE.
+
+## Local 0.3.1 error-dialog update (2026-10-04)
+
+Failures remain in the compact download form with Retry and Open in Browser.
+Failure-action checks verify no automatic configuration prompt, recreation,
+saved-server preservation, explicit successful retry, migration from an expired
+APKMirror landing URL, and chooser exclusion of the companion. A reproduced
+regression where a failed new request offered an older completed APK was fixed
+and verified. Lifecycle checks retain first-use setup, cog editing, cancellation
+and rejection of HTML/unresolved challenges. Ready metadata checks and existing
+source-policy/parser/cookie/endpoint contracts pass.
+
+Release build/lint and APK signature verification pass. The signed local APK
+upgrades 0.3.0 in place while preserving the UI-saved endpoint. The signed APK's
+external chooser and inline error presentation passed an emulator check and
+visual inspection. Logs and the dialog image are retained under
+`artifacts/verification/apkmirror-phone/`.
+
+- APK: `artifacts/Morphe-Downloader-0.3.1.apk`, version code 5; 2,103,319 bytes.
+- SHA-256: `b7d5d1ad62399f52ff83bbe20ce06f645b3d9f0c47386b195e32d6d32aa73ca9`.
+- Certificate SHA-256: `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+
+This is a local artifact, not a new GitHub release. The APKMirror automatic
+correction and physical-phone readiness/receiving-URI proof remain blocked, as
+recorded in specification B5/B6 and the APKMirror Byparr handoff. No downloaded
+YouTube original was patched or installed. Byparr and its other consumers were
+not changed. After preserving the diagnostic evidence and local APK, reviewed
+cleanup removed the exact task-owned temporary root, including private captures,
+emulator data and build intermediates. The task emulator, fixture server and
+completed task-owned Gradle daemon were stopped; other builds were left running.
+
+The user added a host-wide Gradle constraint after these builds finished. No
+Gradle command was launched afterward, so the new mutex/profile has not yet been
+exercised or claimed as verified. Earlier builds used the existing 2 GiB Gradle
+and Kotlin daemon heaps with default worker settings; no memory-related build
+failure occurred. A subsequent required build must acquire
+`Local\Darka.AndroidGradleBuildGate` before host activity checks, hold it until
+command exit, use two workers/no parallel execution, and start with explicit
+3 GiB Gradle/Kotlin heaps. Kotlin 2.3.10/AGP 8.13.2 currently used daemon
+compilation. In-process compilation could remove the separate compiler JVM but
+would share the Gradle heap with AGP; it has not been validated under the new
+budget and should be evaluated in that next required focused build.

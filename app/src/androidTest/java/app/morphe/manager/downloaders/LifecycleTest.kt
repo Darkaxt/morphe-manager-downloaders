@@ -61,15 +61,18 @@ class LifecycleTest {
         }
     }
 
-    @Test fun apiFailureOffersAnExplicitEndpointEditAndRetry() {
+    @Test fun apiFailureKeepsActionsAndCogAllowsExplicitEndpointEdit() {
         Downloads(context).cancel()
         context.getSharedPreferences("browser", Context.MODE_PRIVATE).edit().clear().commit()
         context.getSharedPreferences("byparr", Context.MODE_PRIVATE).edit()
             .putString("endpoint", "http://10.0.2.2:8765/error/v1").commit()
         val page = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:8765/variants/"), context, MainActivity::class.java)
         ActivityScenario.launch<MainActivity>(page).use { scenario ->
+            assertNotNull(device.wait(Until.findObject(By.text("Retry")), 15000))
+            assertNull("API failure opened unsolicited settings", device.findObject(By.clazz("android.widget.EditText")))
+            scenario.onActivity { it.findViewById<android.view.View>(MainActivity.SETTINGS_ID).performClick() }
             val input = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
-            assertNotNull("API failure did not offer endpoint input", input)
+            assertNotNull("Cog must retain endpoint input", input)
             assertTrue(context.getSharedPreferences("browser", Context.MODE_PRIVATE)
                 .getString("pageError", "").orEmpty().contains("502"))
             input.text = "http://10.0.2.2:8765/v1"
@@ -137,7 +140,9 @@ class LifecycleTest {
             .putString("endpoint", "http://10.0.2.2:8765/v1").commit()
         val page = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:8765/challenge/"), context, MainActivity::class.java)
         ActivityScenario.launch<MainActivity>(page).use {
-            assertNotNull(device.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000))
+            assertNotNull(device.wait(Until.findObject(By.text("Retry")), 15000))
+            assertTrue(device.hasObject(By.text("Open in Browser")))
+            assertNull(device.findObject(By.clazz("android.widget.EditText")))
             assertTrue(context.getSharedPreferences("browser", Context.MODE_PRIVATE)
                 .getString("pageError", "").orEmpty().contains("unresolved security check"))
             assertEquals(-1L, Downloads(context).id)

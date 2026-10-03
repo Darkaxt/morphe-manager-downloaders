@@ -5,6 +5,30 @@ import org.junit.Test
 import java.io.IOException
 
 class AdditionalSourcesTest {
+    @Test fun uptodownPreservesTheRequestedBuildAndUsesItsScriptedPage() {
+        val base = "https://showly-2-0.en.uptodown.com/android"
+        val html = "<title>Showly 3.72.0 for Android</title><h1>Showly</h1>" +
+            "<button id='detail-download-button' data-app-id='888750' data-file-id='1220892131' " +
+            "data-download-version='1220892131' data-only-xapk='1'>Download</button>"
+        assertEquals("Uptodown", DownloadPolicy(false).source(base)?.label)
+        val page = RemotePage.parse("$base/download", html)
+        assertEquals("$base/download/1220892131-x", page.next)
+        assertEquals("Showly", page.appName)
+        assertThrows(IOException::class.java) {
+            RemotePage.parse("$base/download/1220892130", html)
+        }
+        assertThrows(IOException::class.java) {
+            RemotePage.parse("$base/download/1220892131-x", html.replace("data-download-version='1220892131'", "data-download-version='1220892130'"))
+        }
+    }
+    @Test fun uptodownAttachmentHostsAreExactAndSeparateFromPageHosts() {
+        val policy = DownloadPolicy(false)
+        assertTrue(policy.downloadUrl("https://dw.uptodown.com/dwn/signed-key"))
+        assertTrue(policy.downloadUrl("https://dw.uptodown.net/dwn/signed-key"))
+        for (url in listOf("https://dw.uptodown.com.evil.test/dwn/key", "https://dw.uptodown.com/other/key",
+            "https://evil.uptodown.com/dwn/key", "http://dw.uptodown.com/dwn/key")) assertFalse(url, policy.downloadUrl(url))
+        assertNull(policy.pageUrl("https://dw.uptodown.com/dwn/key"))
+    }
     @Test fun apkComboKeepsExplicitVersionsAndVariants() {
         val html = "<title>Download Showly APK</title><h1>Showly APK - Latest Version</h1>" +
             "<a class='variant' rel='nofollow noreferrer' href='https://apkcombo.com/d?u=encoded'>Showly 3.72.0 (843) APK arm64</a>" +

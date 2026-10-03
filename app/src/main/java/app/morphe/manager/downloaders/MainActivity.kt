@@ -236,7 +236,7 @@ class MainActivity : ComponentActivity() {
                     if (attachment != null) {
                         try {
                             store.enqueue(attachment.url, page.userAgent, attachment.disposition, attachment.mime,
-                                page.content.url, attachment.cookieHeader, attachment.sendReferer)
+                                attachment.referer ?: page.content.url, attachment.cookieHeader, attachment.sendReferer, attachment.accept)
                             browserPrefs.edit().putBoolean("awaitingDownload", false).commit()
                             refreshDownload()
                         } catch (e: Exception) { pageFailed(e.message ?: "Download could not start.") }

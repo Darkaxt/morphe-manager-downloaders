@@ -1,5 +1,10 @@
 # Uptodown browser-action handoff for Byparr
 
+Status: the backend gap described below is resolved by Byparr commit `5671f24`.
+Morphe Downloader's integration has passed the real Android download/receiver
+workflow. See [current integration](uptodown.md); the following notes preserve the
+earlier investigation and owner handoff, not the current supported API.
+
 ## Request and boundary
 
 Morphe Downloader needs to resolve an original APK from a specific Uptodown build

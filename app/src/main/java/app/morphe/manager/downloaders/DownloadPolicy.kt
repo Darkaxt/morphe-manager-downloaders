@@ -2,7 +2,7 @@ package app.morphe.manager.downloaders
 
 import java.net.URI
 
-enum class DownloadSource(val label: String) { APK_MIRROR("APKMirror"), APK_PURE("APKPure"), APK_COMBO("APKCombo") }
+enum class DownloadSource(val label: String) { APK_MIRROR("APKMirror"), APK_PURE("APKPure"), APK_COMBO("APKCombo"), UPTODOWN("Uptodown") }
 
 class DownloadPolicy(private val debugFixtures: Boolean) {
     private fun parse(value: String): URI? = runCatching { URI(value) }.getOrNull()
@@ -22,6 +22,7 @@ class DownloadPolicy(private val debugFixtures: Boolean) {
             host == "apkpure.com" || host.endsWith(".apkpure.com") ||
                 host == "apkpure.net" || host.endsWith(".apkpure.net") -> DownloadSource.APK_PURE
             host == "apkcombo.com" || host.endsWith(".apkcombo.com") -> DownloadSource.APK_COMBO
+            (host == "uptodown.com" || host.endsWith(".uptodown.com")) && host != "dw.uptodown.com" -> DownloadSource.UPTODOWN
             else -> null
         }
     }
@@ -49,13 +50,15 @@ class DownloadPolicy(private val debugFixtures: Boolean) {
         val comboAttachment = uri.host == "apkcombo.com" && uri.path == "/d" ||
             uri.host == "download.pureapk.com" && (uri.path.startsWith("/b/APK/") || uri.path.startsWith("/b/XAPK/")) ||
             uri.host == "data.winudf.com" && (uri.path.startsWith("/APK/") || uri.path.startsWith("/XAPK/"))
+        val uptodownAttachment = uri.host in listOf("dw.uptodown.com", "dw.uptodown.net") && uri.path.startsWith("/dwn/")
         if (fixture(uri)) return source == null || source == DownloadSource.APK_MIRROR
         if (uri.scheme != "https" || uri.rawUserInfo != null || uri.port !in listOf(-1, 443)) return false
         return when (source) {
             DownloadSource.APK_MIRROR -> mirror(uri) || attachmentBucket
             DownloadSource.APK_PURE -> pureAttachment
             DownloadSource.APK_COMBO -> comboAttachment
-            null -> mirror(uri) || attachmentBucket || pureAttachment || comboAttachment
+            DownloadSource.UPTODOWN -> uptodownAttachment
+            null -> mirror(uri) || attachmentBucket || pureAttachment || comboAttachment || uptodownAttachment
         }
     }
 }

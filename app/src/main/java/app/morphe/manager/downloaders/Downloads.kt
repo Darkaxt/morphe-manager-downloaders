@@ -30,7 +30,7 @@ class Downloads(context: Context) {
     fun markOpened() { prefs.edit().putBoolean("opened", true).commit() }
 
     fun enqueue(url: String, userAgent: String, disposition: String?, mime: String?, referer: String,
-                cookieHeader: String? = null, sendReferer: Boolean = true) = synchronized(stateLock) {
+                cookieHeader: String? = null, sendReferer: Boolean = true, accept: String? = null) = synchronized(stateLock) {
         check(id < 0 || ready || error != null) { "Finish or cancel the current download first." }
         val guessed = URLUtil.guessFileName(url, disposition, mime)
         val name = guessed.substringAfterLast('/').replace(Regex("[^A-Za-z0-9._() -]"), "_").take(180)
@@ -42,6 +42,7 @@ class Downloads(context: Context) {
             .setDestinationUri(Uri.fromFile(target))
             .addRequestHeader("User-Agent", userAgent)
         if (sendReferer) request.addRequestHeader("Referer", referer)
+        accept?.let { request.addRequestHeader("Accept", it) }
         cookieHeader?.takeIf { it.isNotBlank() }?.let {
             request.addRequestHeader("Cookie", it)
         }

@@ -46,7 +46,7 @@ class ByparrLiveTest {
         downloadPrefs.registerOnSharedPreferenceChangeListener(downloadListener)
         pagePrefs.registerOnSharedPreferenceChangeListener(pageListener)
         try {
-            ActivityScenario.launch<MainActivity>(Intent(Intent.ACTION_VIEW, Uri.parse(url), context, MainActivity::class.java)).use {
+            ActivityScenario.launch<MainActivity>(Intent(Intent.ACTION_VIEW, Uri.parse(url), context, MainActivity::class.java)).use { scenario ->
                 // Diagnostic limit belongs to this opt-in test, never application control flow.
                 assertTrue("Real download did not complete: ${store.query()}", completed.await(240, TimeUnit.SECONDS))
                 assertNull(pagePrefs.getString("pageError", null))
@@ -63,10 +63,27 @@ class ByparrLiveTest {
                 fun digest(bytes: ByteArray, algorithm: String) = MessageDigest.getInstance(algorithm)
                     .digest(bytes).joinToString("") { "%02x".format(it) }
                 val sha256 = digest(file.readBytes(), "SHA-256")
+                args.getString("expectedSha256")?.let { assertEquals(it, sha256) }
+                args.getString("expectedSize")?.let { assertEquals(it.toLong(), file.length()) }
+                args.getString("expectedVersionCode")?.let { assertEquals(it.toLong(), store.identity?.versionCode) }
                 val baseMd5 = if (store.format == ArchiveFormat.APK) digest(file.readBytes(), "MD5") else
                     ZipFile(file).use { zip -> digest(zip.getInputStream(zip.getEntry("base.apk")).use { stream -> stream.readBytes() }, "MD5") }
                 args.getString("expectedBaseMd5")?.let { expected -> assertEquals(expected, baseMd5) }
                 args.getString("expectedMd5")?.let { expected -> assertEquals(expected, baseMd5) }
+                args.getString("expectedVersion")?.let { version ->
+                    val device = androidx.test.uiautomator.UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                    assertTrue("Ready archive details were not displayed", device.wait(
+                        androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.textContains("Version: $version")), 15000))
+                    scenario.onActivity { activity ->
+                        val view = activity.window.decorView
+                        val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+                        view.draw(android.graphics.Canvas(bitmap))
+                        File(context.getExternalFilesDir(null), "byparr-live-ready.png").outputStream().use {
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+                        }
+                        bitmap.recycle()
+                    }
+                }
                 val acknowledged = CountDownLatch(1)
                 var received: Intent? = null
                 val receiver = object : BroadcastReceiver() {

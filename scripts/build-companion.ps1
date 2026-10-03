@@ -32,7 +32,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Companion verification build failed.' }
     $artifactRoot = Join-Path $repoRoot 'artifacts'
     New-Item -ItemType Directory -Path $artifactRoot -Force | Out-Null
-    $artifact = Join-Path $artifactRoot 'Morphe-Downloader-0.2.0.apk'
+    $metadata = Get-Content -LiteralPath "$OutputRoot/companion/outputs/apk/release/output-metadata.json" -Raw | ConvertFrom-Json
+    $releaseVersion = $metadata.elements[0].versionName
+    if ([string]::IsNullOrWhiteSpace($releaseVersion) -or $releaseVersion -match '[^0-9A-Za-z._-]') {
+        throw 'Built APK has no safe artifact version.'
+    }
+    $artifact = Join-Path $artifactRoot "Morphe-Downloader-$releaseVersion.apk"
     Copy-Item -LiteralPath "$OutputRoot/companion/outputs/apk/release/app-release.apk" -Destination $artifact
     Write-Output $artifact
 } finally { $env:COMPANION_KEYSTORE_PASSWORD = $previousPassword }

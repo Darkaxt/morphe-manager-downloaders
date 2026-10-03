@@ -1,28 +1,30 @@
 # Morphe Downloader
 
 Standalone download companion for Morphe Manager. Select it in LinkSheet when
-Morphe opens an APKMirror, APKPure or APKCombo link. It follows unambiguous download
+Morphe opens an APKMirror, APKPure, APKCombo or Uptodown link. It follows unambiguous download
 steps, downloads an original APK, APKM or XAPK and shares it back using a temporary content
 URI grant. Enable Morphe's **Expert mode** first; this is the default workflow.
 
 Page resolution uses a configurable private **Byparr server**. The companion has
 a compact native dialog, Morphe artwork with a download badge, and no embedded
-browser. It shows the app name, actual status and measured transfer progress.
+browser. It shows actual status and measured transfer progress. Once ready, the
+dialog shows the archive's app label, package ID and version/build like InstallerX.
 Live Android download/validation/readable-URI checks passed for APKMirror,
-APKPure and APKCombo; an APKMirror APKM was also imported into existing Morphe
+APKPure, APKCombo and Uptodown; an APKMirror APKM was also imported into existing Morphe
 on the isolated Android emulator.
 See [verification](docs/verification.md) and the [specification](docs/specification.md).
 
-**Uptodown is pending** until Byparr supports its browser-generated token and
-download-link flow. Version 0.2.0 does not register Uptodown links. See the
-[integration handoff](docs/uptodown-byparr-handoff.md).
+**Uptodown requires Byparr's browser scripting update** (`custom-post-scripting`).
+The companion supplies the verified recipe and lets the website generate its own
+token. Older Byparr servers remain usable with the other sources. See
+[Uptodown integration](docs/uptodown.md).
 
 ## Use
 
 1. Install [the latest release](https://github.com/Darkaxt/morphe-manager-downloaders/releases/latest)
    alongside your existing Morphe installation. ObtainX can track this repository.
 2. Enable Expert mode in Morphe's settings.
-3. Open Morphe's APKMirror, APKPure or APKCombo link and select **Morphe Downloader**
+3. Open Morphe's APKMirror, APKPure, APKCombo or Uptodown link and select **Morphe Downloader**
    in LinkSheet's app chooser (double-tap its row with LinkSheet's default behavior).
    Its handlers are limited to those supported source domains;
    it does not claim every web link or replace your general-purpose browser.
@@ -36,15 +38,10 @@ download-link flow. Version 0.2.0 does not register Uptodown links. See the
    own bundle/version warnings before importing a file.
 
 There is no public default server. **Byparr server** edits the setting at any time;
-missing settings and failed page/download requests offer **Save and retry**.
-Retrying is explicit. Check the displayed failure as well as the URL: an unresolved
+missing settings and failed page/download requests offer **Cancel** and **Save**.
+Saving retries a pending page explicitly. Check the displayed failure as well as the URL: an unresolved
 server challenge, missing release or client download rejection cannot necessarily
 be fixed by changing the endpoint.
-
-Unreleased UI refinements in the current source show the downloaded app's label,
-package ID and version/build in the ready dialog, following InstallerX's layout.
-Byparr setup uses **Cancel** and **Save**; saving still retries a pending page.
-These refinements are not included in the published 0.2.0 APK.
 
 The companion has its own package (`app.morphe.manager.downloaders`) and signing
 identity. It never patches, signs or installs downloaded apps and does not replace

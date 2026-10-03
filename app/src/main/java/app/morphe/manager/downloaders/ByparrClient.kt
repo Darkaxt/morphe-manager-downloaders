@@ -42,6 +42,7 @@ data class RemotePage(val url: String, val title: String, val next: String?, val
         return path.endsWith("/download.php") || path.endsWith(".apk") || path.endsWith(".apkm") ||
             (source == DownloadSource.APK_PURE && URI(value).host in listOf("d.apkpure.com", "d.apkpure.net"))
             || (source == DownloadSource.APK_COMBO && path == "/d")
+            || (source == DownloadSource.UPTODOWN && DownloadPolicy(false).downloadUrl(value, source))
     }
     companion object {
         fun parse(url: String, html: String, debugFixtures: Boolean = false, requestedUrl: String = url): RemotePage {
@@ -50,10 +51,13 @@ data class RemotePage(val url: String, val title: String, val next: String?, val
             val source = policy.source(url)!!
             val doc = Jsoup.parse(html, url)
             val title = doc.title()
-            if (doc.select("#challenge-running, #challenge-stage, iframe[src*=challenges.cloudflare.com]").isNotEmpty() ||
+            val challengeSelector = if (source == DownloadSource.UPTODOWN) "#challenge-running, #challenge-stage"
+                else "#challenge-running, #challenge-stage, iframe[src*=challenges.cloudflare.com]"
+            if (doc.select(challengeSelector).isNotEmpty() ||
                 title.startsWith("Just a moment", true) || title.startsWith("Checking your browser", true))
                 throw IOException("Byparr returned an unresolved security check.")
             if (title.contains("Page Not Found", true)) throw IOException("${source.label} could not find that release.")
+            if (source == DownloadSource.UPTODOWN) return Uptodown.page(url, requestedUrl, doc)
             if (source == DownloadSource.APK_COMBO) {
                 val requested = Regex("/download/phone-([0-9]+(?:\\.[0-9]+)+)-apk/?$")
                     .find(URI(requestedUrl).path)?.groupValues?.get(1)
@@ -114,10 +118,12 @@ data class RemotePage(val url: String, val title: String, val next: String?, val
 
 /** One explicitly configured Byparr request at a time; no retry or polling loop. */
 class ByparrClient(private val debugFixtures: Boolean) {
-    data class Page(val content: RemotePage, val userAgent: String, val cookies: List<RemoteCookie>) {
+    data class Page(val content: RemotePage, val userAgent: String, val cookies: List<RemoteCookie>,
+                    val attachmentHeaders: Map<String, String> = emptyMap()) {
         fun cookieHeader(url: String) = cookies.filter { it.matches(url) }.joinToString("; ") { "${it.name}=${it.value}" }
     }
-    data class Attachment(val url: String, val disposition: String?, val mime: String?, val cookieHeader: String, val sendReferer: Boolean)
+    data class Attachment(val url: String, val disposition: String?, val mime: String?, val cookieHeader: String,
+                          val sendReferer: Boolean, val referer: String? = null, val accept: String? = null)
     private val cancelled = AtomicBoolean(false)
     @Volatile private var connection: HttpURLConnection? = null
     fun cancel() { cancelled.set(true); connection?.disconnect() }
@@ -140,11 +146,16 @@ class ByparrClient(private val debugFixtures: Boolean) {
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
             // maxTimeout is the Byparr protocol's own browser-request limit.
-            val body = JSONObject().put("cmd", "request.get").put("url", target).put("maxTimeout", 60000)
-                .toString().toByteArray(Charsets.UTF_8)
+            val request = JSONObject().put("cmd", "request.get").put("url", target).put("maxTimeout", 60000)
+            val uptodown = policy.source(target) == DownloadSource.UPTODOWN
+            val scriptedId = if (uptodown) Uptodown.scriptedId(target) else null
+            if (scriptedId != null) request.put("maxTimeout", 120000).put("blockMedia", false)
+                .put("script", Uptodown.script()).put("scriptArgs", JSONObject().put("fileId", scriptedId))
+            val body = request.toString().toByteArray(Charsets.UTF_8)
             conn.setFixedLengthStreamingMode(body.size)
             conn.outputStream.use { it.write(body) }
-            if (conn.responseCode !in 200..299) throw IOException("Byparr API failed (HTTP ${conn.responseCode}).")
+            if (conn.responseCode !in 200..299 || uptodown && conn.responseCode != 200)
+                throw IOException("Byparr API failed (HTTP ${conn.responseCode}).")
             val reply = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
             if (reply.optString("status") != "ok") throw IOException("Byparr did not resolve the page.")
             val solution = reply.getJSONObject("solution")
@@ -163,21 +174,32 @@ class ByparrClient(private val debugFixtures: Boolean) {
             }
             val resolvedUrl = solution.getString("url")
             if (policy.source(resolvedUrl) != policy.source(target)) throw IOException("The server redirected to a different download site.")
-            return Page(RemotePage.parse(resolvedUrl, html, debugFixtures, target), agent, parsed)
+            if (uptodown && (URI(resolvedUrl).host != URI(target).host || solution.optInt("status") != 200))
+                throw IOException("Uptodown returned a different app page or unsuccessful response.")
+            val page = RemotePage.parse(resolvedUrl, html, debugFixtures, target)
+            if (scriptedId != null) {
+                val (resolved, headers) = Uptodown.resolved(reply, page, target, agent)
+                return Page(resolved, agent, parsed, headers)
+            }
+            return Page(page, agent, parsed)
         } finally { conn.disconnect(); connection = null }
     }
 
     fun attachment(page: Page, start: String): Attachment {
         val policy = DownloadPolicy(debugFixtures)
         val visited = mutableSetOf<String>()
-        val sendReferer = page.content.choices.firstOrNull { it.url == start }?.sendReferer ?: true
+        val sendReferer = if (page.content.source == DownloadSource.UPTODOWN) page.attachmentHeaders.containsKey("referer")
+            else page.content.choices.firstOrNull { it.url == start }?.sendReferer ?: true
+        val referer = page.attachmentHeaders["referer"] ?: page.content.url
+        val accept = page.attachmentHeaders["accept"]
         var url = start
         while (visited.add(url)) {
             if (!policy.downloadUrl(url, page.content.source)) throw IOException("${page.content.source.label} redirected to an unsupported attachment host.")
             val conn = connect(url)
             try {
                 conn.setRequestProperty("User-Agent", page.userAgent)
-                if (sendReferer) conn.setRequestProperty("Referer", page.content.url)
+                if (sendReferer) conn.setRequestProperty("Referer", referer)
+                accept?.let { conn.setRequestProperty("Accept", it) }
                 page.cookieHeader(url).takeIf { it.isNotEmpty() }?.let { conn.setRequestProperty("Cookie", it) }
                 val code = conn.responseCode
                 if (code in listOf(301, 302, 303, 307, 308)) {
@@ -190,7 +212,7 @@ class ByparrClient(private val debugFixtures: Boolean) {
                 val disposition = conn.getHeaderField("Content-Disposition")
                 if (mime.orEmpty().startsWith("text/") || mime.orEmpty().contains("html", true))
                     throw IOException("The download site returned a page instead of the original file. The server session may not work from this network.")
-                return Attachment(url, disposition, mime, page.cookieHeader(url), sendReferer)
+                return Attachment(url, disposition, mime, page.cookieHeader(url), sendReferer, referer, accept)
             } finally { conn.disconnect(); connection = null }
         }
         throw IOException("The download site returned a redirect cycle.")

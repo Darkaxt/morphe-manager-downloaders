@@ -240,3 +240,53 @@ recorded in the specification; this presentation change does not close them.
 The task emulator, fixture server and idle task Gradle daemon were stopped after
 verification. The exact registered temporary build/emulator root was removed
 through a reviewed cleanup ticket after retaining the required evidence.
+
+## 0.3.0 Uptodown and metadata release verification (2026-10-04)
+
+R20 authorizes integrating the deployed generic scripting API and publishing a
+new release including R19. The recipe is byte-identical to Byparr commit
+`5671f2474493d6fb2ce5ab5d2cdd4e7fbc47db2f`; no backend source or deployment changed.
+
+- The original endpoint reports `custom-post-scripting`. The exact Showly build
+  page resolves through the packaged recipe, with the website generating its
+  fresh token and POST. The captured successful response and aborted attachment
+  request are validated before native Android transfer.
+- Policy/parser contracts preserve requested file IDs, restrict attachment hosts
+  and reject unrelated builds. Android capture contracts reject missing scripting,
+  failed/different POST responses, non-GET/non-aborted requests, mismatched signed
+  URLs/user agents and invalid headers. A reproduced JSON coercion regression
+  now rejects string values in place of boolean abort/integer status fields.
+- The final signed 0.3.0 APK passed a fresh live Uptodown -> Android DownloadManager
+  -> archive validation -> metadata -> separate receiver readable-URI workflow.
+  The original is 12,004,991 bytes, package `com.michaldrabik.showly2`, version
+  3.72.0/build 843, SHA-256
+  `f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074`.
+  Independent aapt inspection confirms the metadata. The ready dialog visibly
+  displays Showly, its package ID and `3.72.0 (843)`.
+- Focused ready metadata checks cover plain APK, controlled APKM/XAPK base
+  extraction, legacy state, recreation, fallback, unchanged bytes and cache cleanup.
+  Automatic/manual transfer, URI filename/MIME/byte identity, presentation,
+  failure/challenge/cancellation and separate-process restoration pass. These
+  controlled checks preserve the existing three-source workflow contracts.
+- An actual signed 0.2.0 -> 0.3.0 in-place update preserved the endpoint entered
+  through the setup UI. Upgrade instrumentation is explicitly opt-in; default
+  execution skips both version-specific checks. Installed Uptodown page handlers
+  include the exact build URL and exclude the attachment URL.
+- Final release build and lint pass: zero lint errors, 79 warnings, no baseline.
+  APK v2 signature verification passes with the existing certificate. Package
+  `app.morphe.manager.downloaders`, version 0.3.0/code 4, minimum SDK 26, target 36.
+
+Signed deliverable: `artifacts/Morphe-Downloader-0.3.0.apk`, 2,101,819 bytes.
+SHA-256:
+`40180b3297d9e2b1197522002dab5875c11c09cdde90af5d5776a452fcf199f6`.
+Certificate SHA-256:
+`4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+The published 0.2.0 local artifact remains unchanged. Evidence is retained under
+`artifacts/verification/uptodown/`; private captures/endpoints are not published.
+This proves the isolated Android original-download/handoff boundary. It does not
+claim physical-phone Morphe patching or installation; independent Stage 5 remains
+blocked outside this release's scope. Stage 9's backend blocker B4 is resolved.
+The task emulator, fixture server and idle task Gradle daemon are stopped. Both
+exact registered temporary roots were removed through reviewed cleanup tickets;
+the signed deliverable and required evidence remain. Physical devices and user
+browser sessions were unchanged.

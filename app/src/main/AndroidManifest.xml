@@ -26,6 +26,14 @@
                 <data android:host="apkcombo.com" />
                 <data android:host="*.apkcombo.com" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="*.uptodown.com" android:pathPrefix="/android" />
+            </intent-filter>
         </activity>
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files" android:exported="false"

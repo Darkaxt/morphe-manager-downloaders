@@ -237,7 +237,7 @@ phone inspection is claimed. The earlier phone remains unavailable over ADB.
 8. APKCombo vertical slice - COMPLETE (APKCombo portion of R16, R17)
    - Real APKCombo page reaches an original validated file with readable URI.
    - Requested versions and ambiguous variants remain explicit; host policy passes.
-9. Uptodown vertical slice - BLOCKED (Uptodown portion of R16, R17)
+9. Uptodown vertical slice - COMPLETE (Uptodown portion of R16, R17, R20)
    - Real per-build Uptodown page reaches an original validated file with readable URI.
    - Requested versions and ambiguous variants remain explicit; host policy passes.
 10. Refinement release reconciliation - COMPLETE (R17, R18 release scope below)
@@ -380,3 +380,47 @@ setup checks pass with `Cancel`/`Save`, including endpoint persistence and retry
 Current debug/test builds, JVM checks and final lint pass (zero lint errors).
 All R19 presentation criteria pass; no new blocker or deferral remains in this
 scope. This source refinement is unreleased and does not close Stages 5 or 9.
+
+## R20: Uptodown scripting integration and release (2026-10-03)
+
+The user supplied the deployed Byparr scripting handoff and explicitly requested
+implementation and a new release. Integrate the caller-owned recipe from Byparr
+commit `5671f2474493d6fb2ce5ab5d2cdd4e7fbc47db2f`; do not modify or redeploy Byparr.
+Use the user's existing original endpoint. Preserve explicit Uptodown file IDs,
+derive build links from page metadata for app/download landing pages, and expose
+ambiguous release choices rather than substituting a build. Before native transfer,
+validate API HTTP 200/status ok, the matching successful website POST response,
+the aborted GET capture, and its exact signed URL correspondence. Use only the
+captured accept/referer, matching user agent, and destination-scoped cookies.
+Permit only Uptodown's verified attachment hosts/paths through redirects. Inspect
+the original archive independently; do not infer APK/XAPK from the website option.
+No token extraction/replay, automatic retry, arbitrary delay, or fabricated status.
+
+Stage 9 is COMPLETE (R16/R17 Uptodown and R20). The deployed readiness
+reports custom-post-scripting; B4's absent backend operation is resolved. Its
+criteria are companion integration, rejection contracts, incoming link handling,
+and a fresh real Showly build -> Android original download -> archive/package/
+version/build/hash verification -> unchanged readable receiving URI. Controlled
+tests do not replace that live boundary. Preserve the other three sources.
+
+Stage 9 closure: the exact caller recipe is packaged byte-identically to the
+pinned Byparr source. Controlled capture checks reject failed/different website
+responses, missing scripting, non-aborted/non-GET requests, different signed
+URLs, mismatched user agents and invalid/cross-origin forwarded headers. Source
+policy/parser contracts preserve requested IDs and restrict attachment origins.
+The live original endpoint -> Showly file 1220892131 -> Android download -> archive
+validation -> metadata and unchanged receiver URI passed. The APK is 12,004,991
+bytes, package com.michaldrabik.showly2, version 3.72.0/build 843, SHA-256
+f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074.
+The new installed page handler resolves Uptodown app/build URLs and excludes its
+attachment URL. B4 is resolved. No Stage 9 blocker or tracked deferral remains.
+
+Stage 12 — release 0.3.0: ACTIVE (R19/R20). Depends on Stage 9 COMPLETE.
+Include Uptodown plus the verified metadata dialog and Cancel/Save labels. Verify
+focused integrated contracts, signed release build/lint, original certificate,
+0.2.0 in-place upgrade with endpoint persistence, accurate documentation/release
+notes, cleanup, commit/push, normal GitHub release and independently downloaded
+asset byte equality. The user's new release request authorizes publication.
+Stage 5 remains BLOCKED on its independent physical-phone workflow; the release
+uses isolated emulator verification, consistent with the established release
+boundary, and does not claim physical-phone or patched-app installation proof.

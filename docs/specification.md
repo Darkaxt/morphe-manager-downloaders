@@ -240,7 +240,7 @@ phone inspection is claimed. The earlier phone remains unavailable over ADB.
 9. Uptodown vertical slice - BLOCKED (Uptodown portion of R16, R17)
    - Real per-build Uptodown page reaches an original validated file with readable URI.
    - Requested versions and ambiguous variants remain explicit; host policy passes.
-10. Refinement release reconciliation - ACTIVE (R17, R18 release scope below)
+10. Refinement release reconciliation - COMPLETE (R17, R18 release scope below)
    - Integrated focused checks pass, signed artifact and docs match actual support,
     generated expendable files are cleaned and verified changes committed/pushed.
 
@@ -256,7 +256,7 @@ register Uptodown handlers or present it as supported. This explicitly authorize
 partial feature delivery; Stage 9 remains BLOCKED on B4 and is excluded from this
 release's completion criteria. The earlier independent phone criteria in Stage 5
 remain BLOCKED and are also excluded from this release scope. Neither exclusion
-declares those stages complete. Stage 10 is the only ACTIVE stage; Byparr remains
+declares those stages complete. Stage 10 owns this partial release; Byparr remains
 unchanged. The original endpoint is retained. No phone/Thor installation is required
 or claimed for this release; verification uses the isolated task emulator.
 
@@ -269,8 +269,8 @@ now waits for the actual preference-change event before asserting its result.
 Stage 8 passed after the user's requested Helium capture exposed the incorrect
 Referer header. Fresh real Android download/validation, package/version inspection
 and receiver byte equality pass for Showly 3.72.0. The earlier B3 hypothesis is
-resolved. Stage 9 owns Uptodown and is parked on B4 below. Stage 10 is the only
-ACTIVE stage under the later authorized R18 release scope.
+resolved. Stage 9 owns Uptodown and is parked on B4 below. Stage 10 delivers the
+later authorized R18 release scope; no implementation stage remains ACTIVE.
 Stage 5 remains parked on its earlier independent phone
 verification boundary. No required work is assigned an unnamed future deferral.
 
@@ -336,6 +336,11 @@ The task emulator, fixture server and capture tab are stopped/closed. Both exact
 task-generated Temp roots are removed after retaining required APKs/evidence;
 cleanup completed through reviewed tickets, including a fresh review after the
 idle task Gradle daemon released lint metadata handles. Byparr and user devices
-were left unchanged. Source commit/push and authorized publication/asset verification
-remain Stage 10's final delivery criteria. R18 excludes unresolved Stages 5 and 9
-from this release; no claim of all-source completion is made.
+were left unchanged. Source commit `7b875c106b40679288282002021f0ce75786e8e7`
+was pushed and independently matched on GitHub. Normal release v0.2.0 targets that
+commit and is the latest release. Its only asset, `Morphe-Downloader-0.2.0.apk`,
+was downloaded and compared byte-for-byte with the verified 2,092,502-byte local
+APK; GitHub's SHA-256 digest also matches
+`60ec0eeafcdd3de91aa1368187fc5f2c6f5431b833f8e8576eda8cce918e7750`.
+All R18 release criteria pass and Stage 10 is COMPLETE. R18 excludes unresolved
+Stages 5 and 9 from this release; no claim of all-source completion is made.

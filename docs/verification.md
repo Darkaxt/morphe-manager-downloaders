@@ -192,3 +192,12 @@ Local evidence is retained under `artifacts/verification/refinement/`, including
 signed build/lint, Android contracts, separate-process restoration, signature,
 upgrade/handler checks and live provider logs. Private traffic captures and signed
 links remain gitignored and are not published.
+
+[v0.2.0](https://github.com/Darkaxt/morphe-manager-downloaders/releases/tag/v0.2.0)
+is published as a normal/latest release targeting source commit
+`7b875c106b40679288282002021f0ce75786e8e7`. The published APK was independently
+downloaded and matched the local deliverable byte-for-byte; GitHub's asset digest
+also matches the SHA-256 above. Exact task-generated Temp roots were removed
+through reviewed cleanup tickets after preserving deliverables/evidence and
+stopping the task emulator, fixture server and idle task Gradle daemon. The owned
+capture tab was closed; other user browser tabs and build processes were preserved.

@@ -39,12 +39,12 @@ APK file handoff; this is the default workflow.
    - Both source histories integrated, meaningful fork changes reconciled with
      the current source layout, no conflict markers; provenance recorded.
    - Consolidated downloader sources compile against the matching manager API.
-2. APKMirror vertical slice — ACTIVE (R2–R6)
+2. APKMirror vertical slice — BLOCKED (R2–R6)
    - Link handler launches; a real APKMirror page reaches an original download;
      completed archive validates and is readable by a receiving Android app.
    - Default share targets Morphe Expert mode; manual variant/challenge states
      stay usable and are accurately reported.
-3. Lifecycle, verification and delivery — NOT STARTED (R5, R7, R8)
+3. Lifecycle, verification and delivery — BLOCKED (R5, R7, R8)
    - Cancellation/failure/recreation behavior passes focused checks; release APK,
      lint, integration verification, documentation and source delivery complete.
 
@@ -56,14 +56,39 @@ sources from `api@1.0.0-dev.4` (b7e94efb). GitHub Packages returns HTTP 401 with
 available credentials; `scripts/build-manager-api.ps1` provides a pinned-source
 local verification build. No required tracked deferrals.
 
-Stage 2 live verification currently encounters Cloudflare's human-verification
-checkbox in Chrome. User interaction has been requested; implementation and
-isolated Android verification remain actionable.
+Stage 2: the emulator fixture verified page traversal, session cookie/User-Agent/
+Referer forwarding, original APK download, archive validation and a separate
+installed Android app reading the URI with matching SHA-256, filename and MIME.
+The default intent targets Morphe. Official Morphe 1.33.0 imported the original
+fixture APK on the emulator and displayed its package in Expert-mode selection.
+Official LinkSheet 0.0.33 offered the companion and opened a real APKMirror URL in
+its WebView. The site's human-verification checkbox was displayed correctly.
+External blocker B1: the real APKMirror-page-to-download acceptance criterion
+cannot pass while APKMirror serves Cloudflare human verification in the available
+browser. User interaction has been requested. Resolution requires access to a real
+release page and a successful original-file download. Live selector compatibility
+and overall stage closure remain unverified; fixtures do not resolve B1. Stage 2
+is parked. Confirmation to click the displayed checkbox has also been requested.
+
+Stage 3 local acceptance criteria passed: cancellation, rejection of invalid files,
+activity recreation without duplicate transfers, recovery in a fresh process,
+archive/URL contracts, debug/release lint, locally signed APK, readable action
+layout, LinkSheet selection and actual Morphe Expert-mode import. Signing identity,
+usage and evidence are documented in `docs/verification.md`. Source delivery is
+being committed and pushed. B1 also prevents Stage 3's required final real-site
+integration verification, so this stage remains BLOCKED even after local source
+delivery. The unresolved condition is external and resolves only when the real
+page-to-file workflow passes. No required work is classified as a tracked deferral.
+
+Overall outcome is not COMPLETE. R1, R2, R3, R5, R6 and R7 have local evidence;
+R4's real download-step selection and R8's final real-site check remain blocked by
+B1. No external release or physical-device installation is authorized or performed.
 
 ## Consolidation decisions
 
 The GitHub fork was created from brosssh immediately before the request to first
-consolidate the original repository. It has no custom implementation yet; merge
-the canonical history into that same fork network rather than recreating it.
+consolidate the original repository. It had no custom implementation at that point;
+the canonical history was merged into that same fork network before the companion
+was implemented, rather than recreating the GitHub fork.
 Canonical main and dev have identical trees. New source layout, API, toolchain and
 disabled broken Play Store registration take precedence over the old split apps.

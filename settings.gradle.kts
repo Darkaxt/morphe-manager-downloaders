@@ -1,4 +1,4 @@
-rootProject.name = "revanced-manager-downloaders"
+rootProject.name = "morphe-manager-downloaders"
 
 pluginManagement {
     repositories {
@@ -14,3 +14,5 @@ pluginManagement {
         }
     }
 }
+
+include(":app")

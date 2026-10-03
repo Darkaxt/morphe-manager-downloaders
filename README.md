@@ -1,119 +1,88 @@
-<p align="center">
-  <picture>
-    <source
-      width="256px"
-      media="(prefers-color-scheme: dark)"
-      srcset="assets/revanced-headline/revanced-headline-vertical-dark.svg"
-    >
-    <img
-      width="256px"
-      src="assets/revanced-headline/revanced-headline-vertical-light.svg"
-    >
-  </picture>
-  <br>
-  <a href="https://revanced.app/">
-     <picture>
-         <source height="24px" media="(prefers-color-scheme: dark)" srcset="assets/revanced-logo/revanced-logo.svg" />
-         <img height="24px" src="assets/revanced-logo/revanced-logo.svg" />
-     </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="https://github.com/ReVanced">
-       <picture>
-           <source height="24px" media="(prefers-color-scheme: dark)" srcset="https://i.ibb.co/dMMmCrW/Git-Hub-Mark.png" />
-           <img height="24px" src="https://i.ibb.co/9wV3HGF/Git-Hub-Mark-Light.png" />
-       </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="http://revanced.app/discord">
-       <picture>
-           <source height="24px" media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/13122796/178032563-d4e084b7-244e-4358-af50-26bde6dd4996.png" />
-           <img height="24px" src="https://user-images.githubusercontent.com/13122796/178032563-d4e084b7-244e-4358-af50-26bde6dd4996.png" />
-       </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="https://reddit.com/r/revancedapp">
-       <picture>
-           <source height="24px" media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/13122796/178032351-9d9d5619-8ef7-470a-9eec-2744ece54553.png" />
-           <img height="24px" src="https://user-images.githubusercontent.com/13122796/178032351-9d9d5619-8ef7-470a-9eec-2744ece54553.png" />
-       </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="https://t.me/app_revanced">
-      <picture>
-         <source height="24px" media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/13122796/178032213-faf25ab8-0bc3-4a94-a730-b524c96df124.png" />
-         <img height="24px" src="https://user-images.githubusercontent.com/13122796/178032213-faf25ab8-0bc3-4a94-a730-b524c96df124.png" />
-      </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="https://x.com/revancedapp">
-      <picture>
-         <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/93124920/270180600-7c1b38bf-889b-4d68-bd5e-b9d86f91421a.png">
-         <img height="24px" src="https://user-images.githubusercontent.com/93124920/270108715-d80743fa-b330-4809-b1e6-79fbdc60d09c.png" />
-      </picture>
-   </a>&nbsp;&nbsp;&nbsp;
-   <a href="https://www.youtube.com/@ReVanced">
-      <picture>
-         <source height="24px" media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/13122796/178032714-c51c7492-0666-44ac-99c2-f003a695ab50.png" />
-         <img height="24px" src="https://user-images.githubusercontent.com/13122796/178032714-c51c7492-0666-44ac-99c2-f003a695ab50.png" />
-     </picture>
-   </a>
-   <br>
-   <br>
-   Continuing the legacy of Vanced
-</p>
+# Morphe Manager Downloaders
 
-# 👋🔌 ReVanced Manager Downloaders
+Standalone APKMirror companion for Morphe Manager. Select it in LinkSheet when
+Morphe opens an APKMirror link. It follows unambiguous download steps, downloads
+an original APK or APKM and shares it back to Morphe using a temporary content
+URI grant. Enable Morphe's **Expert mode** first; this is the default workflow.
 
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ReVanced/revanced-manager-downloaders/release.yml)
-![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)
+**Status:** consolidation and local Android verification are complete. Live
+APKMirror page-to-file verification is blocked by Cloudflare human verification.
+This is a local verification build, not a published release or a claim of complete
+APKMirror compatibility. See [verification](docs/verification.md) and the
+[authoritative specification](docs/specification.md).
 
-The collection of ReVanced downloaders.
+## Use
 
-## 🧑‍💻 Usage
+1. Install the companion APK alongside your existing Morphe installation.
+2. Enable Expert mode in Morphe's settings.
+3. Open Morphe's APKMirror download link and select **Morphe Manager Downloaders**
+   in LinkSheet's app chooser. Its handlers are limited to APKMirror domains;
+   it does not claim every web link or replace your general-purpose browser.
+4. Choose a variant if more than one exists. Complete any site verification in
+   the displayed page, then use **Continue automatically** if needed.
+5. After validation, the original file opens in Morphe. **Open in Morphe** repeats
+   that handoff; **Share file** offers another receiving app. If Morphe is absent,
+   the companion explains the requirement and offers sharing or keeping the file.
 
-- Downloaders are managed as Android apps. Download and install the APK file from the [releases page](https://github.com/ReVanced/revanced-manager-downloaders/releases/).
-- After installing, restart ReVanced Manager and enable the downloader in the settings.
-- The downloader will now be usable.
+The companion has its own package (`app.morphe.manager.downloaders`) and signing
+identity. It never patches, signs or installs downloaded apps and does not replace
+Morphe or touch Morphe's patch-signing keystore. Existing patched installations
+keep their existing signing identity because the existing manager does the patching.
 
+APKMirror can require manual variant selection or security checks. Android owns
+transfers; the companion restores the recorded transfer when reopened. Android
+may pause or fail a transfer according to network, server or system conditions.
+Failures are displayed for an explicit new download. Successful original files
+remain in the companion's app storage until its data is cleared or it is uninstalled.
+Archive checks reject HTML and incomplete ZIP layouts; Morphe performs APK parsing,
+bundle merging and patching. The companion does not certify an APK's publisher.
 
-### APKMirror Downloader
-This downloader will open an [APKMirror](https://www.apkmirror.com/) page where you can download the apk as you would normally do.
-If the chosen file is a bundle (`apkm` file), the downloader will automatically merge it into an `apk` file.
+## Build
 
-### Play Store Downloader
-When you get prompted, log in to Google with your account. After that, you will be able to download apps from the Play Store.
+Requires Java 17+, Android SDK 36 and the bundled Gradle wrapper.
 
-> [!WARNING]
-> Due to technical limitations, it is only possible to download the latest version of the app. If the suggested version differs from the latest, the installation will fail.
-> This plugin is not officially endorsed by or affiliated with Google. All usage is at your own risk.
+```powershell
+./gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./scripts/build-companion.ps1
+```
 
-## 📚 Everything else
+The signing script builds and lints the release configuration, then copies the
+local deliverable to `artifacts/Morphe-Manager-Downloaders-0.1.0.apk`. It creates a
+persistent signing identity only on first use, under
+`%USERPROFILE%/.android/keystores/morphe-manager-downloaders/`. Keep `companion.p12`
+and `password.txt` together and private; both are needed to build updates accepted
+by an existing companion installation. They are outside the repository and are
+not Morphe's patch-signing key. You can supply `-SigningRoot` for your own location.
 
-### 📙 Contributing
+## Android verification
 
-Thank you for considering contributing to ReVanced Manager Downloaders.
-You can find the contribution guidelines [here](CONTRIBUTING.md).
+Use an isolated emulator, not a physical device. Start the fixture server with a
+built debug APK, install the debug app and its Android test APK, then run:
 
-### 🛠️ Building
+```powershell
+python scripts/fixture-server.py --apk <absolute-debug-apk-path>
+./scripts/verify-emulator.ps1 -Serial emulator-5580
+```
 
-To build ReVanced Manager Downloaders, a Java Development Kit (JDK) and Git must be installed.
-Follow the steps below to build ReVanced Manager Downloaders:
+The fixture server binds host loopback. Only debug builds accept emulator loopback
+HTTP URLs; release builds accept APKMirror HTTPS only. Fixtures verify the Android
+transfer and URI contracts and do not substitute for a successful real-site check.
+The script verifies an ongoing download across separate instrumentation processes.
 
-1. Run `git clone git@github.com:ReVanced/revanced-manager-downloaders.git` to clone the repository
-2. Run `gradlew assembleRelease` to build the project
+## Sources and license
 
-> [!NOTE]
-> If the build fails due to authentication, you may need to authenticate to GitHub Packages.
-> Create a PAT with the scope `read:packages` [here](https://github.com/settings/tokens/new?scopes=read:packages&description=ReVanced) and add your token to ~/.gradle/gradle.properties.
->
-> Example `gradle.properties` file:
->
-> ```properties
-> gpr.user = user
-> gpr.key = key
-> ```
+Fork of [brosssh/revanced-manager-downloaders](https://github.com/brosssh/revanced-manager-downloaders),
+consolidated with [ReVanced/revanced-manager-downloaders](https://github.com/ReVanced/revanced-manager-downloaders)
+v1.2.0. Both source histories are preserved. [Consolidation decisions](docs/source-consolidation.md)
+record retained fork behavior and the current API/toolchain baseline. GPL-3.0 applies;
+see [LICENSE](LICENSE). This companion is an independent project.
 
-## 📜 License
+The root Gradle project remains the separate legacy ReVanced plugin, including
+APKMirror, APKPure and APKCombo providers. Those extra providers do not add site
+support to the Morphe companion. The broken upstream Play Store registration
+remains disabled. If GitHub Packages credentials cannot resolve the legacy API,
+`scripts/build-manager-api.ps1` builds the matching API sources at an immutable
+commit; pass its AAR with `-PmanagerApiAar=<path>` when compiling the root project.
 
-This project is licensed under the GPLv3 licence.
-Please see the [license file](LICENSE) for more information.
-[tl;dr](https://www.tldrlegal.com/license/gnu-general-public-license-v3-gpl-3) you may copy, distribute
-and modify the plugin as long as you track changes/dates in source files.
-Any modifications must also be made available under the GPL,
-along with build & install instructions.
+Publishing releases and automatically creating PRs are disabled on push. The legacy
+release and PR-creation workflows require explicit manual invocation.

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Morphe Manager Downloaders</string>
+    <string name="open_morphe">Open in Morphe</string>
+    <string name="share">Share file</string>
+    <string name="cancel">Cancel download</string>
+    <string name="continue_download">Continue automatically</string>
+    <string name="start_hint">Open an APKMirror link from Morphe through LinkSheet. Completed files open in Morphe Expert mode.</string>
+</resources>

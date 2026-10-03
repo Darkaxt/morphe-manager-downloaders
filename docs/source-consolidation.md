@@ -20,7 +20,7 @@ declaration. Fork-only version metadata does not override canonical v1.2.0.
 Keep the canonical disabled Play Store registration: upstream documents its login
 as broken, and the requested Morphe companion targets APKMirror only.
 
-The separately packaged Morphe companion will live in `app/`; the consolidated
+The separately packaged Morphe companion lives in `app/`; the consolidated
 ReVanced downloader package remains a distinct build target. Preserving those
 providers does not advertise companion support for other websites.
 

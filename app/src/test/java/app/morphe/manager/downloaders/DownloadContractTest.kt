@@ -8,7 +8,7 @@ import java.util.zip.ZipOutputStream
 
 class DownloadContractTest {
     @Test fun acceptsOnlyApkMirrorSitesAndUpgradesHttp() {
-        val policy = ApkMirrorPolicy(false)
+        val policy = DownloadPolicy(false)
         assertEquals("https://www.apkmirror.com/apk/example/", policy.pageUrl("http://www.apkmirror.com/apk/example/"))
         assertEquals("https://www.apkmirror.com/a%2Fb?key=x%2By%26z#v%2F1",
             policy.pageUrl("http://www.apkmirror.com:80/a%2Fb?key=x%2By%26z#v%2F1"))
@@ -23,12 +23,12 @@ class DownloadContractTest {
         assertTrue(policy.downloadUrl("https://downloadr2.apkmirror.com/file.apk"))
     }
     @Test fun loopbackFixturesAreDebugOnly() {
-        assertNull(ApkMirrorPolicy(false).pageUrl("http://10.0.2.2:8765/release"))
-        assertNotNull(ApkMirrorPolicy(true).pageUrl("http://10.0.2.2:8765/release"))
-        assertFalse(ApkMirrorPolicy(true).downloadUrl("http://192.168.1.1/file.apk"))
+        assertNull(DownloadPolicy(false).pageUrl("http://10.0.2.2:8765/release"))
+        assertNotNull(DownloadPolicy(true).pageUrl("http://10.0.2.2:8765/release"))
+        assertFalse(DownloadPolicy(true).downloadUrl("http://192.168.1.1/file.apk"))
     }
     @Test fun acceptsOnlyTheObservedApkMirrorAttachmentBucket() {
-        val policy = ApkMirrorPolicy(false)
+        val policy = DownloadPolicy(false)
         val cdn = "eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com"
         val url = "https://$cdn/downloadprod/wp-content/uploads/2026/10/file.apkm?signature=value"
         assertTrue(policy.downloadUrl(url))
@@ -50,14 +50,16 @@ class DownloadContractTest {
         }
         val apk = archive("AndroidManifest.xml", "classes.dex")
         val apkm = archive("info.json", "base.apk", "split_config.arm64_v8a.apk")
+        val xapk = archive("manifest.json", "com.example.app.apk", "config.arm64_v8a.apk")
         val broken = archive("split_config.arm64_v8a.apk")
         val html = File.createTempFile("morphe-html", ".apk").apply { writeText("<html>Verification needed</html>") }
         try {
             assertEquals("apk", ArchiveFormat.detect(apk).extension)
             assertEquals("apkm", ArchiveFormat.detect(apkm).extension)
+            assertEquals("xapk", ArchiveFormat.detect(xapk).extension)
             for (file in listOf(broken, html)) {
                 assertThrows(java.io.IOException::class.java) { ArchiveFormat.detect(file) }
             }
-        } finally { listOf(apk, apkm, broken, html).forEach { it.delete() } }
+        } finally { listOf(apk, apkm, xapk, broken, html).forEach { it.delete() } }
     }
 }

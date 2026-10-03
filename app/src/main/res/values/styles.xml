@@ -1,8 +1,12 @@
 <resources>
-    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="DialogBase" parent="android:style/Theme.Material.Light.Dialog.NoActionBar" />
+    <style name="AppTheme" parent="DialogBase">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#176E55</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.45</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 </resources>

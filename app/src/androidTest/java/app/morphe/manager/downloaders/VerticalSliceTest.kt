@@ -7,6 +7,10 @@ import androidx.test.core.app.ActivityScenario
 import androidx.core.content.ContextCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiSelector
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Until
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +24,12 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class VerticalSliceTest {
-    @Test fun downloadsOriginalWithSessionAndSharesReadableUri() {
+    @Test fun downloadsOriginalWithSessionAndSharesReadableUri() = verifyOriginal("/release/", false)
+
+    @Test fun selectedAttachmentDownloadsWithItsResolvedSessionAndSharesReadableUri() =
+        verifyOriginal("/attachment-choices/", true)
+
+    private fun verifyOriginal(path: String, selectAttachment: Boolean) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val store = Downloads(context)
@@ -41,9 +50,15 @@ class VerticalSliceTest {
             if (key == "ready" || key == "error") downloaded.countDown()
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
-        val page = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:8765/release/"), context, MainActivity::class.java)
+        val page = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:8765$path"), context, MainActivity::class.java)
         ActivityScenario.launch<MainActivity>(page).use { scenario ->
             try {
+                if (selectAttachment) {
+                    val second = UiDevice.getInstance(instrumentation).findObject(UiSelector().text("Second APK"))
+                    assertTrue("Attachment choices were not presented", second.waitForExists(15000))
+                    assertEquals("Ambiguous attachments must not download before selection", -1L, store.id)
+                    second.click()
+                }
                 assertTrue("Download did not reach completion", downloaded.await(45, TimeUnit.SECONDS))
                 assertNull(store.error)
                 assertTrue(store.ready)
@@ -56,7 +71,12 @@ class VerticalSliceTest {
                 assertEquals(ArchiveFormat.APK, store.format)
                 assertEquals("fixture.apk", store.displayName)
                 val completedId = store.id
+                val device = UiDevice.getInstance(instrumentation)
+                assertTrue("Completed download did not reach its ready presentation",
+                    device.wait(Until.hasObject(By.text("Ready: APKMirror fixture")), 15000))
                 scenario.recreate()
+                assertTrue("Recreation reopened the incoming link instead of restoring the ready result",
+                    device.wait(Until.hasObject(By.text("Ready: APKMirror fixture")), 15000))
                 assertEquals(completedId, Downloads(context).id)
                 assertTrue(Downloads(context).ready)
                 val original = store.file!!.readBytes()

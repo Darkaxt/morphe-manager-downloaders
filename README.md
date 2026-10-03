@@ -1,23 +1,30 @@
 # Morphe Downloader
 
-Standalone APKMirror companion for Morphe Manager. Select it in LinkSheet when
-Morphe opens an APKMirror link. It follows unambiguous download steps, downloads
-an original APK or APKM and shares it back to Morphe using a temporary content
+Standalone download companion for Morphe Manager. Select it in LinkSheet when
+Morphe opens an APKMirror, APKPure or APKCombo link. It follows unambiguous download
+steps, downloads an original APK, APKM or XAPK and shares it back using a temporary content
 URI grant. Enable Morphe's **Expert mode** first; this is the default workflow.
 
-APKMirror page resolution uses a configurable private **Byparr server**. The
-companion has a native interface and no embedded browser. A real APKMirror APKM
-was downloaded and imported into existing Morphe on the isolated Android emulator.
+Page resolution uses a configurable private **Byparr server**. The companion has
+a compact native dialog, Morphe artwork with a download badge, and no embedded
+browser. It shows the app name, actual status and measured transfer progress.
+Live Android download/validation/readable-URI checks passed for APKMirror,
+APKPure and APKCombo; an APKMirror APKM was also imported into existing Morphe
+on the isolated Android emulator.
 See [verification](docs/verification.md) and the [specification](docs/specification.md).
+
+**Uptodown is pending** until Byparr supports its browser-generated token and
+download-link flow. Version 0.2.0 does not register Uptodown links. See the
+[integration handoff](docs/uptodown-byparr-handoff.md).
 
 ## Use
 
 1. Install [the latest release](https://github.com/Darkaxt/morphe-manager-downloaders/releases/latest)
    alongside your existing Morphe installation. ObtainX can track this repository.
 2. Enable Expert mode in Morphe's settings.
-3. Open Morphe's APKMirror download link and select **Morphe Downloader**
+3. Open Morphe's APKMirror, APKPure or APKCombo link and select **Morphe Downloader**
    in LinkSheet's app chooser (double-tap its row with LinkSheet's default behavior).
-   Its handlers are limited to APKMirror domains;
+   Its handlers are limited to those supported source domains;
    it does not claim every web link or replace your general-purpose browser.
 4. When prompted, enter your private HTTPS Byparr API URL, for example
    `https://your-server:8191/v1`. The setting persists. Your phone must be able to
@@ -39,7 +46,7 @@ identity. It never patches, signs or installs downloaded apps and does not repla
 Morphe or touch Morphe's patch-signing keystore. Existing patched installations
 keep their existing signing identity because the existing manager does the patching.
 
-APKMirror can require manual variant selection. Byparr handles page security checks;
+Download sites can require manual version/variant selection. Byparr handles page security checks;
 an unresolved challenge is reported as a failure. Android owns
 transfers; the companion restores the recorded transfer when reopened. Android
 may pause or fail a transfer according to network, server or system conditions.
@@ -58,7 +65,7 @@ Requires Java 17+, Android SDK 36 and the bundled Gradle wrapper.
 ```
 
 The signing script builds and lints the release configuration, then copies the
-local deliverable to `artifacts/Morphe-Downloader-0.1.1.apk`. It creates a
+local deliverable to `artifacts/Morphe-Downloader-0.2.0.apk`. It creates a
 persistent signing identity only on first use, under
 `%USERPROFILE%/.android/keystores/morphe-manager-downloaders/`. Keep `companion.p12`
 and `password.txt` together and private; both are needed to build updates accepted
@@ -81,14 +88,16 @@ transfer and URI contracts and do not substitute for a successful real-site chec
 The script verifies an ongoing download across separate instrumentation processes.
 
 The optional `ByparrLiveTest` takes instrumentation arguments `byparrEndpoint`,
-`apkMirrorUrl` (a real APKM variant URL), and optionally `expectedBaseMd5` (the
-listed base.apk hash). It tests the actual server, native attachment redirect and
+`downloadUrl` (a real supported-source URL), and optionally `expectedFormat`,
+`expectedPackage`, `expectedVersion`, `expectedMd5` (an APK hash) or
+`expectedBaseMd5` (an APKM base.apk hash). It tests the actual server, native attachment redirect and
 Android download boundary. `MorpheHandoffSmokeTest` opens the resulting original;
 inspect Morphe's import screen independently before claiming successful import.
 
 The API transport is POST `/v1` with `cmd: request.get`. Upstream `request.post`
-is not needed by the verified APKMirror flow and is not yet invoked. Cookies and
+is not needed by the verified sources and is not invoked. Cookies and
 user agent are forwarded together, with cookies restricted to their domain/path.
+APKCombo's `noreferrer` attachment policy is preserved.
 Byparr resolves HTML; Android downloads the attachment. Session clearance may be
 bound to the server's outgoing IP, so success with one server/network does not
 establish universal portability. [Integration details](docs/byparr-assessment.md).
@@ -102,8 +111,8 @@ record retained fork behavior and the current API/toolchain baseline. GPL-3.0 ap
 see [LICENSE](LICENSE). This companion is an independent project.
 
 The root Gradle project remains the separate legacy ReVanced plugin, including
-APKMirror, APKPure and APKCombo providers. Those extra providers do not add site
-support to the Morphe companion. The broken upstream Play Store registration
+APKMirror, APKPure and APKCombo providers. Its providers are separate from the
+standalone companion's implementations. The broken upstream Play Store registration
 remains disabled. If GitHub Packages credentials cannot resolve the legacy API,
 `scripts/build-manager-api.ps1` builds the matching API sources at an immutable
 commit; pass its AAR with `-PmanagerApiAar=<path>` when compiling the root project.

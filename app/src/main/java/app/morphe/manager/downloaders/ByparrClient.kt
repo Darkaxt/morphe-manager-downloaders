@@ -34,25 +34,65 @@ data class RemoteCookie(val name: String, val value: String, val domain: String,
     }.getOrDefault(false)
 }
 
-data class RemoteMirrorPage(val url: String, val title: String, val next: String?, val choices: List<Choice>) {
-    data class Choice(val url: String, val label: String)
+data class RemotePage(val url: String, val title: String, val next: String?, val choices: List<Choice>, val source: DownloadSource,
+                      val appName: String = title.substringBefore(" - APKMirror").substringBefore(" APK Download")) {
+    data class Choice(val url: String, val label: String, val sendReferer: Boolean = true)
     fun isAttachment(value: String): Boolean {
         val path = URI(value).path
-        return path.endsWith("/download.php") || path.endsWith(".apk") || path.endsWith(".apkm")
+        return path.endsWith("/download.php") || path.endsWith(".apk") || path.endsWith(".apkm") ||
+            (source == DownloadSource.APK_PURE && URI(value).host in listOf("d.apkpure.com", "d.apkpure.net"))
+            || (source == DownloadSource.APK_COMBO && path == "/d")
     }
     companion object {
-        fun parse(url: String, html: String, debugFixtures: Boolean = false): RemoteMirrorPage {
-            val policy = ApkMirrorPolicy(debugFixtures)
+        fun parse(url: String, html: String, debugFixtures: Boolean = false, requestedUrl: String = url): RemotePage {
+            val policy = DownloadPolicy(debugFixtures)
             if (policy.pageUrl(url) == null) throw IOException("Byparr returned an unsupported page URL.")
+            val source = policy.source(url)!!
             val doc = Jsoup.parse(html, url)
             val title = doc.title()
             if (doc.select("#challenge-running, #challenge-stage, iframe[src*=challenges.cloudflare.com]").isNotEmpty() ||
                 title.startsWith("Just a moment", true) || title.startsWith("Checking your browser", true))
                 throw IOException("Byparr returned an unresolved security check.")
-            if (title.contains("Page Not Found", true)) throw IOException("APKMirror could not find that release.")
+            if (title.contains("Page Not Found", true)) throw IOException("${source.label} could not find that release.")
+            if (source == DownloadSource.APK_COMBO) {
+                val requested = Regex("/download/phone-([0-9]+(?:\\.[0-9]+)+)-apk/?$")
+                    .find(URI(requestedUrl).path)?.groupValues?.get(1)
+                val choices = doc.select("a.variant[href]").mapNotNull { a ->
+                    val link = a.absUrl("href")
+                    val label = a.text()
+                    if (requested != null && !Regex("(?:^|[^0-9.])${Regex.escape(requested)}(?:$|[^0-9.])").containsMatchIn(label))
+                        return@mapNotNull null
+                    if (policy.downloadUrl(link, source)) Choice(link, label, "noreferrer" !in a.attr("rel").split(' ')) else null
+                }.distinctBy { it.url }
+                if (requested != null && choices.isEmpty()) throw IOException("APKCombo did not return the requested version $requested.")
+                return RemotePage(url, title, choices.singleOrNull()?.url, choices, source,
+                    doc.selectFirst("h1")?.text()?.substringBefore(" APK") ?: title.substringBefore(" APK").removePrefix("Download "))
+            }
+            if (source == DownloadSource.APK_PURE) {
+                val requested = URI(requestedUrl).path.substringAfter("/download/", "").takeIf {
+                    it.matches(Regex("[0-9]+(?:\\.[0-9]+)+"))
+                }
+                if (requested != null && !Regex("(?:^|[^0-9.])${Regex.escape(requested)}(?:$|[^0-9.])").containsMatchIn(title))
+                    throw IOException("APKPure returned a different version than the requested $requested.")
+                val anchors = doc.select("#download_link, a.download-start-btn").ifEmpty {
+                    doc.select("a.da, a.download_apk, a.download-btn")
+                }
+                val packageName = URI(requestedUrl).path.split('/').firstOrNull {
+                    it.matches(Regex("[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+"))
+                }
+                val choices = anchors.mapNotNull { a ->
+                    val link = a.absUrl("href").substringBefore('#')
+                    if (packageName != null && packageName !in URI(link).path.split('/')) return@mapNotNull null
+                    if (policy.downloadUrl(link, source) || policy.pageUrl(link) != null && policy.source(link) == source)
+                        Choice(link, a.text().ifBlank { a.attr("title") }) else null
+                }.distinctBy { it.url }
+                return RemotePage(url, title, choices.singleOrNull()?.url, choices, source,
+                    doc.selectFirst("h1.info-title")?.text()?.takeIf { it.isNotBlank() } ?: title.removePrefix("Download ").substringBefore(" Latest Version"))
+            }
             val links = doc.select("a[href]").mapNotNull { anchor ->
                 val raw = anchor.absUrl("href").substringBefore('#')
-                val allowed = policy.pageUrl(raw) ?: raw.takeIf(policy::downloadUrl) ?: return@mapNotNull null
+                val allowed = policy.pageUrl(raw)?.takeIf { policy.source(it) == source }
+                    ?: raw.takeIf { policy.downloadUrl(it, source) } ?: return@mapNotNull null
                 anchor to Choice(allowed, (anchor.closest(".table-row") ?: anchor).text().ifBlank { allowed })
             }
             val buttons = links.filter { (a, link) -> a.hasClass("downloadButton") || a.id() == "download-link" ||
@@ -66,18 +106,18 @@ data class RemoteMirrorPage(val url: String, val title: String, val next: String
                 val path = URI(it.url).path
                 path.endsWith("-release/") && path.startsWith(basePath) && it.url != url.substringBefore('#')
             }.distinctBy { it.url }
-            return RemoteMirrorPage(url, title, buttons.singleOrNull()?.url ?: variants.singleOrNull()?.url,
-                buttons.ifEmpty { variants.ifEmpty { releases } })
+            return RemotePage(url, title, buttons.singleOrNull()?.url ?: variants.singleOrNull()?.url,
+                buttons.ifEmpty { variants.ifEmpty { releases } }, source)
         }
     }
 }
 
 /** One explicitly configured Byparr request at a time; no retry or polling loop. */
 class ByparrClient(private val debugFixtures: Boolean) {
-    data class Page(val content: RemoteMirrorPage, val userAgent: String, val cookies: List<RemoteCookie>) {
+    data class Page(val content: RemotePage, val userAgent: String, val cookies: List<RemoteCookie>) {
         fun cookieHeader(url: String) = cookies.filter { it.matches(url) }.joinToString("; ") { "${it.name}=${it.value}" }
     }
-    data class Attachment(val url: String, val disposition: String?, val mime: String?, val cookieHeader: String)
+    data class Attachment(val url: String, val disposition: String?, val mime: String?, val cookieHeader: String, val sendReferer: Boolean)
     private val cancelled = AtomicBoolean(false)
     @Volatile private var connection: HttpURLConnection? = null
     fun cancel() { cancelled.set(true); connection?.disconnect() }
@@ -92,7 +132,8 @@ class ByparrClient(private val debugFixtures: Boolean) {
 
     fun fetch(endpoint: String, url: String): Page {
         val api = ByparrEndpoint.normalize(endpoint, debugFixtures) ?: throw IOException("Enter a valid HTTPS Byparr endpoint.")
-        val target = ApkMirrorPolicy(debugFixtures).pageUrl(url) ?: throw IOException("Only APKMirror page links are supported.")
+        val policy = DownloadPolicy(debugFixtures)
+        val target = policy.pageUrl(url) ?: throw IOException("Open a supported download-site link.")
         val conn = connect(api)
         try {
             conn.requestMethod = "POST"
@@ -109,7 +150,7 @@ class ByparrClient(private val debugFixtures: Boolean) {
             val solution = reply.getJSONObject("solution")
             if (solution.optInt("status", 0) !in 200..299) throw IOException("Byparr reported an unsuccessful target response.")
             val contentType = solution.optString("contentType", "text/html")
-            if (!contentType.startsWith("text/html")) throw IOException("Byparr did not return an APKMirror page.")
+            if (!contentType.startsWith("text/html")) throw IOException("Byparr did not return a download page.")
             val html = solution.getString("response")
             if (html.isBlank()) throw IOException("Byparr returned an empty page.")
             val agent = solution.getString("userAgent")
@@ -120,24 +161,27 @@ class ByparrClient(private val debugFixtures: Boolean) {
                 RemoteCookie(cookie.getString("name"), cookie.getString("value"), cookie.getString("domain"),
                     cookie.optString("path", "/"), cookie.optBoolean("secure"), cookie.optDouble("expires", -1.0))
             }
-            return Page(RemoteMirrorPage.parse(solution.getString("url"), html, debugFixtures), agent, parsed)
+            val resolvedUrl = solution.getString("url")
+            if (policy.source(resolvedUrl) != policy.source(target)) throw IOException("The server redirected to a different download site.")
+            return Page(RemotePage.parse(resolvedUrl, html, debugFixtures, target), agent, parsed)
         } finally { conn.disconnect(); connection = null }
     }
 
     fun attachment(page: Page, start: String): Attachment {
-        val policy = ApkMirrorPolicy(debugFixtures)
+        val policy = DownloadPolicy(debugFixtures)
         val visited = mutableSetOf<String>()
+        val sendReferer = page.content.choices.firstOrNull { it.url == start }?.sendReferer ?: true
         var url = start
         while (visited.add(url)) {
-            if (!policy.downloadUrl(url)) throw IOException("APKMirror redirected to an unsupported attachment host.")
+            if (!policy.downloadUrl(url, page.content.source)) throw IOException("${page.content.source.label} redirected to an unsupported attachment host.")
             val conn = connect(url)
             try {
                 conn.setRequestProperty("User-Agent", page.userAgent)
-                conn.setRequestProperty("Referer", page.content.url)
+                if (sendReferer) conn.setRequestProperty("Referer", page.content.url)
                 page.cookieHeader(url).takeIf { it.isNotEmpty() }?.let { conn.setRequestProperty("Cookie", it) }
                 val code = conn.responseCode
                 if (code in listOf(301, 302, 303, 307, 308)) {
-                    val location = conn.getHeaderField("Location") ?: throw IOException("APKMirror returned an empty redirect.")
+                    val location = conn.getHeaderField("Location") ?: throw IOException("The download site returned an empty redirect.")
                     url = URI(url).resolve(location).toString()
                     continue
                 }
@@ -145,10 +189,10 @@ class ByparrClient(private val debugFixtures: Boolean) {
                 val mime = conn.contentType
                 val disposition = conn.getHeaderField("Content-Disposition")
                 if (mime.orEmpty().startsWith("text/") || mime.orEmpty().contains("html", true))
-                    throw IOException("APKMirror returned a page instead of the original file. The server session may not work from this network.")
-                return Attachment(url, disposition, mime, page.cookieHeader(url))
+                    throw IOException("The download site returned a page instead of the original file. The server session may not work from this network.")
+                return Attachment(url, disposition, mime, page.cookieHeader(url), sendReferer)
             } finally { conn.disconnect(); connection = null }
         }
-        throw IOException("APKMirror returned a redirect cycle.")
+        throw IOException("The download site returned a redirect cycle.")
     }
 }

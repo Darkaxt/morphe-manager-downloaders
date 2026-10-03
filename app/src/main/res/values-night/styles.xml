@@ -1,0 +1,3 @@
+<resources>
+    <style name="DialogBase" parent="android:style/Theme.Material.Dialog.NoActionBar" />
+</resources>

@@ -95,7 +95,11 @@ verification pass. The signing certificate is unchanged.
 
 Corrective deliverable: `artifacts/Morphe-Downloader-0.1.1.apk`, 2,083,318 bytes;
 SHA-256 `e5a214ca7949d2fac3f842ec05df7e4db7cb6fc2fb12c79b4b5ea05de9ee7170`.
-The physical-phone import retest of this build is still pending. Stage 5 remains ACTIVE.
+The independent physical-phone import retest of this build is still pending.
+Stage 5 is BLOCKED by the disconnected phone. The user subsequently resumed work
+and reported successful patching/installing after changing Morphe's installer.
+This is user-reported success, not new independent phone verification. See the
+historical checkpoint and later refinement scope in the specification.
 
 ## Testing limits
 
@@ -123,7 +127,68 @@ python scripts/fixture-server.py --apk <absolute-debug-apk-path>
 
 For the optional live test, install the debug and test APKs on the isolated emulator
 and invoke `ByparrLiveTest` with instrumentation arguments `byparrEndpoint` and
-`apkMirrorUrl`; supply `expectedBaseMd5` when the page lists it. Keep the endpoint
+`downloadUrl`; supply `expectedBaseMd5` for an APKM base, or `expectedMd5`,
+`expectedPackage` and `expectedVersion` for an APK. Keep the endpoint
 private. Run `MorpheHandoffSmokeTest` before fixture tests replace the active file,
 then independently inspect Morphe's import screen. A successful Activity launch
 alone does not prove parsing/import. Stop before patching/installing target apps.
+
+## 0.2.0 refinement release verification
+
+The user authorized publishing the completed presentation/APKPure/APKCombo changes
+while keeping Uptodown pending until the Byparr browser-action update is ready.
+Stage 9's Uptodown boundary and Stage 5's independent phone retest are excluded
+from this release scope, not declared complete.
+
+- Morphe's exact launcher vector and a small original download badge render in
+  the compact native dialog. Light/dark and narrow/wide presentation was visually
+  inspected. Settings retain a 48dp accessible target; content can scroll.
+- The title becomes `Downloading {app name}` after page metadata arrives. Bottom
+  text represents resolution, measured transfer, validation and completion. It
+  does not invent progress during Byparr resolution. Manual variants use source
+  labels, not fixture labels: the real APKCombo Showly entry includes version
+  `3.72.0 (843)`, APK, `11 MB`, Android requirement and DPI range.
+- Real APKPure and APKCombo Showly 3.72.0 workflows passed on Android 15:
+  configured Byparr page -> native attachment redirect -> Android DownloadManager
+  -> archive validation/package/version checks -> separate receiver reading the
+  unchanged original through its granted URI. APKCombo's link declared
+  `noreferrer`; preserving that policy fixed its rejected attachment redirect.
+- The two providers returned the same 12,004,991-byte original:
+  SHA-256 `f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074`,
+  MD5 `e1bb5ea5b4e0d866c3159034076f3c90`, package
+  `com.michaldrabik.showly2`, version 3.72.0/build 843. Signature verification
+  passed. APKMirror's container hash differs, but ZIP entry payloads and signer
+  certificates match; it was not treated as a provider-independent binary hash.
+- APK/XAPK structural checks, requested-version rejection, advert exclusion,
+  source-specific host policy and cookie contracts pass the current JVM checks.
+  XAPK uses Morphe's declared `application/x-xapk` MIME. Live added-source proof
+  used APKs; it does not claim a new live XAPK import into Morphe.
+- Fresh Android checks pass for explicit attachment choice with its resolved
+  session, unchanged receiver bytes, missing/saved endpoint, explicit error retry,
+  unresolved challenge, HTML rejection, cancellation and recreation. Separate
+  instrumentation processes with a force-stop restore a recorded transfer.
+- A stronger completed-window regression reproduced reprocessing the original
+  VIEW intent on recreation. Creation now restores persisted state when Android
+  supplies saved instance state. Both automatic and manually selected downloads
+  remain ready with the same download ID after recreation; the check waits for
+  the actual ready presentation rather than observing preferences too early.
+- The release APK has the existing signing certificate, version 0.2.0/code 3,
+  Android 8 minimum and target SDK 36. Release build/lint and v2 APK signature
+  verification pass; lint has 0 errors and existing localization/dependency/style
+  warnings. No lint baseline was added.
+- An actual signed 0.1.1 -> 0.2.0 in-place upgrade passed on the task emulator,
+  preserving a saved HTTPS endpoint. The installed release handles APKMirror,
+  APKPure com/net and APKCombo; it does not handle Uptodown or arbitrary web links.
+- No Byparr source/deployment, physical phone, AYN Thor, Morphe patch-signing key
+  or patched application was changed for this release. Uptodown remains pending
+  as documented in the [handoff](uptodown-byparr-handoff.md).
+
+Local signed deliverable: `artifacts/Morphe-Downloader-0.2.0.apk`, 2,092,502 bytes.
+APK SHA-256:
+`60ec0eeafcdd3de91aa1368187fc5f2c6f5431b833f8e8576eda8cce918e7750`.
+Certificate SHA-256 remains
+`4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+Local evidence is retained under `artifacts/verification/refinement/`, including
+signed build/lint, Android contracts, separate-process restoration, signature,
+upgrade/handler checks and live provider logs. Private traffic captures and signed
+links remain gitignored and are not published.

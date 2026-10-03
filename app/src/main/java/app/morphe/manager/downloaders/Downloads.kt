@@ -24,18 +24,18 @@ class Downloads(context: Context) {
     fun markOpened() { prefs.edit().putBoolean("opened", true).commit() }
 
     fun enqueue(url: String, userAgent: String, disposition: String?, mime: String?, referer: String,
-                cookieHeader: String? = null) = synchronized(stateLock) {
+                cookieHeader: String? = null, sendReferer: Boolean = true) = synchronized(stateLock) {
         check(id < 0 || ready || error != null) { "Finish or cancel the current download first." }
         val guessed = URLUtil.guessFileName(url, disposition, mime)
         val name = guessed.substringAfterLast('/').replace(Regex("[^A-Za-z0-9._() -]"), "_").take(180)
             .ifBlank { "download.apk" }
         val target = File(app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "${UUID.randomUUID()}-$name")
         val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle(name).setDescription("${app.getString(R.string.app_name)} · APKMirror")
+            .setTitle(name).setDescription("${app.getString(R.string.app_name)} · ${DownloadPolicy(false).source(referer)?.label.orEmpty()}")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationUri(Uri.fromFile(target))
             .addRequestHeader("User-Agent", userAgent)
-            .addRequestHeader("Referer", referer)
+        if (sendReferer) request.addRequestHeader("Referer", referer)
         cookieHeader?.takeIf { it.isNotBlank() }?.let {
             request.addRequestHeader("Cookie", it)
         }

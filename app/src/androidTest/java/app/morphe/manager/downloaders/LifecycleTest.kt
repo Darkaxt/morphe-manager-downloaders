@@ -43,8 +43,16 @@ class LifecycleTest {
             val input = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
             assertNotNull("Missing endpoint did not prompt", input)
             input.text = "https://private-server.example:8191"
-            device.findObject(By.text("SAVE AND RETRY")).click()
             val prefs = context.getSharedPreferences("byparr", Context.MODE_PRIVATE)
+            val saved = CountDownLatch(1)
+            val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                if (key == "endpoint") saved.countDown()
+            }
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+            try {
+                device.findObject(By.text("SAVE AND RETRY")).click()
+                assertTrue("Endpoint save was not observed", saved.await(15, TimeUnit.SECONDS))
+            } finally { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
             assertEquals("https://private-server.example:8191/v1", prefs.getString("endpoint", null))
             scenario.recreate()
             assertEquals("https://private-server.example:8191/v1", prefs.getString("endpoint", null))

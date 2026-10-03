@@ -21,7 +21,7 @@ function Invoke-ContractTest([string]$Classes, [string]$LogName) {
         throw "Android contract verification failed: $LogName"
     }
 }
-Invoke-ContractTest 'app.morphe.manager.downloaders.LifecycleTest,app.morphe.manager.downloaders.VerticalSliceTest' 'android-contracts'
+Invoke-ContractTest 'app.morphe.manager.downloaders.LifecycleTest,app.morphe.manager.downloaders.VerticalSliceTest,app.morphe.manager.downloaders.PresentationTest' 'android-contracts'
 Invoke-ContractTest 'app.morphe.manager.downloaders.ProcessPersistenceTest#aPreparePendingDownload' 'process-prepare'
 & $adb -s $Serial shell am force-stop app.morphe.manager.downloaders
 if ($LASTEXITCODE -ne 0) { throw 'Could not stop the verification process.' }

@@ -16,17 +16,17 @@ class ByparrContractTest {
 
     @Test fun actualDownloadMarkupAndVariantAmbiguityArePreserved() {
         val url = "https://www.apkmirror.com/apk/example/example-1-release/"
-        val variants = RemoteMirrorPage.parse(url, "<title>Example 1</title>" +
+        val variants = RemotePage.parse(url, "<title>Example 1</title>" +
             "<div class='table-row'>arm64 <a href='example-1-android-apk-download/'>1</a>" +
             "<a href='example-1-android-apk-download/#disqus_thread'>comments</a></div>" +
             "<div class='table-row'>x86 <a href='example-1-2-android-apk-download/'>1</a></div>")
         assertNull(variants.next)
         assertEquals(2, variants.choices.size)
         assertTrue(variants.choices[0].label.contains("arm64"))
-        val landing = RemoteMirrorPage.parse(url + "example-1-android-apk-download/",
+        val landing = RemotePage.parse(url + "example-1-android-apk-download/",
             "<a class='downloadButton' href='download/?key=abc'>Download APK Bundle</a>")
         assertTrue(landing.next!!.endsWith("/download/?key=abc"))
-        val attachment = RemoteMirrorPage.parse(url + "example-1-android-apk-download/download/?key=abc",
+        val attachment = RemotePage.parse(url + "example-1-android-apk-download/download/?key=abc",
             "<a id='download-link' href='/wp-content/themes/APKMirror/download.php?id=1&amp;key=abc'>here</a>")
         assertTrue(attachment.isAttachment(attachment.next!!))
         assertTrue(attachment.next!!.endsWith("?id=1&key=abc"))
@@ -36,10 +36,10 @@ class ByparrContractTest {
         for (html in listOf("<title>Just a moment...</title><div id='challenge-stage'>Verify</div>",
             "<title>Page Not Found - APKMirror</title>")) {
             assertThrows(java.io.IOException::class.java) {
-                RemoteMirrorPage.parse("https://www.apkmirror.com/apk/example/", html)
+                RemotePage.parse("https://www.apkmirror.com/apk/example/", html)
             }
         }
-        assertNull(RemoteMirrorPage.parse("https://www.apkmirror.com/apk/example/",
+        assertNull(RemotePage.parse("https://www.apkmirror.com/apk/example/",
             "<a href='example-1-release/'>Example 1</a>").next)
     }
 

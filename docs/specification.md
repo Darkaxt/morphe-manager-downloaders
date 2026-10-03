@@ -142,7 +142,7 @@ no-release boundary for this companion release only.
    - Release has the verified APK; remote asset equals the local deliverable.
    - Existing ObtainX tracks this repository and installs the expected companion
      package/version on the authorized phone.
-5. Showly phone workflow and reconciliation - ACTIVE (R11, R12, R13)
+5. Showly phone workflow and reconciliation - BLOCKED (R11, R12, R13)
    - Morphe's real Showly link traverses LinkSheet, Byparr and original download.
    - Existing Morphe reads the original Showly file and displays the selected
      app/version. No target patch/install or changes to its signing identity occur.
@@ -156,7 +156,7 @@ ObtainX tracks the correct repository/package and shows installed 0.1.0 as up to
 Its existing InstallerX Resign route installed the original APK without resigning.
 InstallerX required notification and all-files permissions during its first-use flow;
 these were enabled for that installer only. No other app was updated or replaced.
-Only Stage 5 is ACTIVE. No required tracked deferrals exist. Showly's phone workflow
+No stage is ACTIVE. No required tracked deferrals exist. Showly's phone workflow
 is not yet verified. The actual phone test exposed an internal defect: Samsung's
 DownloadManager successfully wrote `downloadfile.apk`, while validation used the
 requested filename. Stage 5 owns correcting validation to use the provider's
@@ -164,3 +164,178 @@ completed local URI, regression verification, and a corrective release needed to
 retest through ObtainX. The downloaded original is 12,004,991 bytes, SHA-256
 3ec55fffbb2614c810e49f9e3441d4f29c0e263e4f8dd6d5fdbec1e4d0ea1708.
 This correction preserves R5/R11; it does not change their acceptance criteria.
+
+The corrected 0.1.1 APK passed the stale-path regression, lifecycle checks,
+separate-process transfer restoration, JVM checks, release build/lint and unchanged
+certificate verification. Published v0.1.1 targets 2b9d28e61; its asset digest equals
+the local APK (e5a214ca7949d2fac3f842ec05df7e4db7cb6fc2fb12c79b4b5ea05de9ee7170).
+B2 (external): ADB lost the authorized physical phone before the ObtainX update.
+R11's real-phone Morphe import and R13's installed new label remain unmet. Reconnecting
+and unlocking that phone resolves the environment blocker. Stage 5 is parked;
+its workflow and final reconciliation cannot be considered complete until retested.
+
+### User-requested pause checkpoint
+
+Execution paused at the user's explicit request after the phone disconnected.
+No further testing, installation, publication, commits or cleanup should run until
+the user resumes. Stage 5 remains BLOCKED; Stages 1–4 remain COMPLETE.
+
+- v0.1.1 is published with the renamed `Morphe-Downloader-0.1.1.apk`; source
+  commit 2b9d28e61 is pushed. Its signature and remote digest are verified above.
+- The phone still had 0.1.0 at disconnection. Its Byparr endpoint is saved and
+  DownloadManager download 1353 retained the original Showly 3.72.0 as
+  `downloadfile.apk` in the companion's external Download folder. A local copy
+  is preserved in `artifacts/verification/showly/Showly-3.72.0-original.apk`.
+- Resume by reconnecting the authorized phone, updating the existing ObtainX
+  entry to 0.1.1 without resigning, then verifying original-file Morphe import.
+  Stop before target patching/installing; preserve existing Morphe state.
+- The isolated emulator was told to stop and the fixture server was stopped.
+  Temporary output remains at `D:\Temp\morphe-manager-downloaders-showly-fix`.
+  Cleanup transaction `3503b83c6f50e923edb21e5b6acac11d` is registered but has not
+  been reviewed/ticketed/applied. Resume cleanup only after preserving required
+  evidence and checking generated processes have stopped.
+- Documentation reconciliation, phone UI scratch-file cleanup and the final
+  documentation commit/push remain outstanding. Checkpoint edits are uncommitted.
+
+## Authorized refinement and additional sources
+
+The user resumed work, reported successful manual download/patch/install after
+changing Morphe's installer, and requested the following changes. The screenshot's
+missing explicit component was Morphe's configured InstallerX package, not an
+archive-integrity failure. Manual phone success is user-reported; no new independent
+phone inspection is claimed. The earlier phone remains unavailable over ADB.
+
+- R14: Use Morphe's current launcher artwork with the existing download-arrow badge
+  scaled down at bottom right. Preserve package/signing identity and asset attribution.
+- R15: Change **Morphe Downloader**, not InstallerX, to a compact rounded native
+  dialog resembling InstallerX Resign's installer presentation. Show the APK name
+  and a styled progress bar beneath it. Respect light/dark theme, readable spacing,
+  touch targets and scrolling on narrow screens. Represent Byparr resolution as
+  indeterminate, then actual Android download progress; never invent percentages.
+  Retain settings, explicit cancellation, manual variants, errors, restoration and
+  original-file sharing. Dismissing must not silently cancel an Android transfer.
+- R16: Add APKPure, APKCombo and Uptodown support (all three explicitly confirmed)
+  using the saved Byparr endpoint and native original-file download/handoff.
+  Register only supported source domains, restrict
+  navigation/attachment hosts by source, preserve requested version/variant, and
+  validate original APK/bundle bytes. No arbitrary host acceptance or automatic
+  retries. Keep the disabled legacy Google Play provider unchanged.
+- R17: Verify each added source against a real representative link through the
+  configured server, Android download, archive validation and readable receiver URI.
+  Record an external blocker if a required boundary cannot be proved; fixtures alone
+  do not establish live support. Final focused regression/lifecycle/manifest checks,
+  signed artifact, documentation, cleanup and commit/push complete the refinement.
+  No new release is authorized merely by these feature requests.
+
+6. Compact presentation and icon - COMPLETE (R14, R15)
+   - Exact Morphe vector artwork plus distinguishable small download badge renders.
+   - Dialog is visually inspected in light/dark, narrow and wide configurations.
+   - Settings/manual selection/error/cancel/restoration/URI behavior still passes.
+7. APKPure vertical slice - COMPLETE (APKPure portion of R16, R17)
+   - Real APKPure page reaches an original validated file with readable URI.
+   - Requested versions and ambiguous variants remain explicit; host policy passes.
+8. APKCombo vertical slice - COMPLETE (APKCombo portion of R16, R17)
+   - Real APKCombo page reaches an original validated file with readable URI.
+   - Requested versions and ambiguous variants remain explicit; host policy passes.
+9. Uptodown vertical slice - BLOCKED (Uptodown portion of R16, R17)
+   - Real per-build Uptodown page reaches an original validated file with readable URI.
+   - Requested versions and ambiguous variants remain explicit; host policy passes.
+10. Refinement release reconciliation - ACTIVE (R17, R18 release scope below)
+   - Integrated focused checks pass, signed artifact and docs match actual support,
+    generated expendable files are cleaned and verified changes committed/pushed.
+
+### Authorized release scope: 0.2.0
+
+R18 (2026-10-03): The user explicitly requested a release with the previous
+features while leaving Uptodown pending until the Byparr update is ready. Publish
+a normal 0.2.0 companion release containing the Morphe icon/download badge, compact
+dialog, actual name/status/progress, APKMirror, APKPure and APKCombo support, and
+XAPK structural validation/handoff. Preserve package and signing identity, verify
+the signed artifact and published asset, and document Uptodown as pending. Do not
+register Uptodown handlers or present it as supported. This explicitly authorizes
+partial feature delivery; Stage 9 remains BLOCKED on B4 and is excluded from this
+release's completion criteria. The earlier independent phone criteria in Stage 5
+remain BLOCKED and are also excluded from this release scope. Neither exclusion
+declares those stages complete. Stage 10 is the only ACTIVE stage; Byparr remains
+unchanged. The original endpoint is retained. No phone/Thor installation is required
+or claimed for this release; verification uses the isolated task emulator.
+
+Stage 6 passed: the bounded rounded dialog and exact Morphe vector plus small
+download badge were visually inspected in light/dark at 1080x2400 and 1968x2184.
+Presentation assertions pass; existing error/challenge/manual-choice, cancellation,
+recreation and original-byte receiver contracts pass. An endpoint-save test race
+now waits for the actual preference-change event before asserting its result.
+
+Stage 8 passed after the user's requested Helium capture exposed the incorrect
+Referer header. Fresh real Android download/validation, package/version inspection
+and receiver byte equality pass for Showly 3.72.0. The earlier B3 hypothesis is
+resolved. Stage 9 owns Uptodown and is parked on B4 below. Stage 10 is the only
+ACTIVE stage under the later authorized R18 release scope.
+Stage 5 remains parked on its earlier independent phone
+verification boundary. No required work is assigned an unnamed future deferral.
+
+Stage 7 passed: real APKPure Showly 3.72.0 (build 843) was resolved through Byparr,
+downloaded on Android, validated, and read unchanged through a receiving app's URI.
+Package/version and APK signature were independently inspected. APKPure's container
+MD5 differs from APKMirror's, but all ZIP entry payloads and signing certificates
+match; the APKPure-specific hash is used in the live check. Tests reject changed
+versions, advertising APKs and attachment hosts belonging to another source.
+APK/XAPK archive formats are supported; XAPK uses Morphe's declared x-xapk MIME.
+The user's subsequent title/status clarification is recorded under R15: after
+metadata arrives, show `Downloading {app name}` and actual resolution, transfer,
+validation and ready states. No fabricated percentage during page resolution.
+
+B3 (original hypothesis, superseded by Helium capture): APKCombo's real Showly 3.72.0 page resolves and its
+browser POST steps return a versioned variant, but `/d` redirects through
+`download.pureapk.com` to APKPure's `/url?e=2` HTML error page, not an attachment.
+Fresh native POSTs to the actual `/dl` and `/checkin` endpoints reproduce the
+failure. Resolving the generated URL through Byparr also fails at its protocol
+boundary. Android reproduces the rejected attachment redirect; no APK was accepted.
+R17's real original download/validation/readable URI cannot pass until that upstream
+attachment service produces a downloadable original through the supported transport.
+The user requested Helium traffic capture. The capture proves `/d` ->
+`download.pureapk.com` -> `data.winudf.com` succeeds when the anchor's `noreferrer`
+policy is preserved. Sending Referer reproduces the HTML error with the identical
+URL; omitting Referer returns the APK with both Helium and Byparr user agents.
+This is an internal request-policy defect, not evidence of an unavailable upstream.
+The native redirect resolver and Android DownloadManager now preserve the chosen
+anchor's referrer policy. Fresh Android download and receiver verification then
+passed, closing Stage 8. Helium's local CDN blocking was not disabled.
+
+B4 (external integration, 2026-10-03): R16/R17's Uptodown resolution through the
+configured Byparr service cannot currently pass. The real per-build page has no
+static attachment URL. Clicking its download button obtains an embedded Turnstile
+token, then submits a JSON POST to its download-url endpoint. A browser capture
+observed a successful response containing the signed attachment key; following
+that key with native HTTP produced the original APK. Byparr GET returned the page
+without a populated token. Native POST with an empty token returned HTTP 400,
+errorCode -51. Attempts through the deployed custom-post API were rejected with
+HTTP 429 before submission while its browser slot was occupied; these are not
+evidence of a failed upstream POST implementation. POST transport and same-context
+preflight alone do not perform the page's button-driven token flow.
+
+The user explicitly instructed this task not to extend Byparr, and requested a
+handoff for that repository's task owner. No backend files or deployment were
+changed. The original saved service endpoint remains selected. Resolving B4
+requires the owner to provide and live-verify a supported same-browser operation
+that returns the requested build's signed attachment URL. Uptodown's Android
+download/validation/receiver verification and final all-source reconciliation
+remain unsatisfied until that boundary is available. Stage 9 is BLOCKED; Stage 10
+owns the explicitly authorized partial release under R18. See
+`docs/uptodown-byparr-handoff.md` for reproducible evidence and
+the requested capability; it proposes behavior, not an existing API command.
+
+Stage 10 release preparation passed: current companion JVM contracts, Android
+presentation/lifecycle/manual-attachment/URI checks, separate-process restoration,
+release build/lint and original signing-certificate verification apply to the
+0.2.0 implementation. A reproduced completed-window recreation defect is corrected
+and both automatic/manual downloads remain ready with the same transfer ID.
+The final signed APK upgrades from 0.1.1 while preserving a saved endpoint. Installed
+handlers include APKMirror/APKPure/APKCombo and exclude Uptodown/unrelated hosts.
+The task emulator, fixture server and capture tab are stopped/closed. Both exact
+task-generated Temp roots are removed after retaining required APKs/evidence;
+cleanup completed through reviewed tickets, including a fresh review after the
+idle task Gradle daemon released lint metadata handles. Byparr and user devices
+were left unchanged. Source commit/push and authorized publication/asset verification
+remain Stage 10's final delivery criteria. R18 excludes unresolved Stages 5 and 9
+from this release; no claim of all-source completion is made.

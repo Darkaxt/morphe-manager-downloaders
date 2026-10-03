@@ -5,5 +5,5 @@
     <string name="cancel">Cancel download</string>
     <string name="server_settings">Byparr server</string>
     <string name="cancel_page">Cancel page request</string>
-    <string name="start_hint">Open an APKMirror link from Morphe through LinkSheet. Completed files open in Morphe Expert mode.</string>
+    <string name="start_hint">Open an APKMirror, APKPure or APKCombo link from Morphe through LinkSheet.</string>
 </resources>

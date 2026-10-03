@@ -1,0 +1,8 @@
+<resources>
+    <color name="surface">#152124</color>
+    <color name="primary">#6CDADA</color>
+    <color name="on_primary">#003638</color>
+    <color name="text_primary">#E1EEF0</color>
+    <color name="text_secondary">#A9BDC1</color>
+    <color name="progress_track">#294144</color>
+</resources>

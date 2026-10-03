@@ -30,6 +30,8 @@ def main():
             pages = {
                 "/release/": '<a href="/release/one-android-apk-download/">Universal APK</a>',
                 "/release/one-android-apk-download/": '<a class="downloadButton" href="/download.php?id=fixture">DOWNLOAD APK</a>',
+                "/attachment-choices/": '<a class="downloadButton" href="/download.php?id=first">First APK</a>'
+                                        '<a class="downloadButton" href="/download.php?id=second">Second APK</a>',
                 "/variants/": '<div class="table-row">arm64 <a href="/variants/one-android-apk-download/">APK</a></div>'
                               '<div class="table-row">x86 <a href="/variants/two-android-apk-download/">APK</a></div>',
                 "/challenge/": '<div id="challenge-stage">Human verification required</div>',

@@ -403,4 +403,20 @@ Unchanged certificate SHA-256:
 `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
 Evidence is retained in `artifacts/verification/byparr-queue/` (gitignored).
 Stage 13's B5/B6 remain unresolved; the new queue adoption is a separate verified
-release scope. Publication and final cleanup are recorded after delivery.
+release scope.
+
+Delivery: source commit `56ef75ce74789ca26bd612b70e5895cc7a903b8b` was pushed to
+`origin/main`; GitHub release `v0.3.2` is normal, non-draft and latest, targeting
+that source. Its independently downloaded APK matches the local tested signed
+deliverable byte-for-byte. The GitHub asset is uploaded, 2,103,647 bytes, with the
+same SHA-256 recorded above. The release uses meaningful notes from
+`docs/release-notes/v0.3.2.md` and retains the independent APKMirror limitation.
+
+Reviewed transactional cleanup removed all 2,368 members of
+`D:/Temp/morphe-byparr-queue` (115,992,101 logical bytes), the failed-command report
+and its empty task-created `D:/plugins` parent. Cleanup reported no errors or
+residuals; both root paths were independently confirmed absent. The isolated
+emulator, host fixture and remote loopback fixture stopped, and the task-owned
+idle Gradle processes were cleaned after completion evidence. The signed APK and
+required evidence remain outside the removed roots. No physical-device state was
+changed. Stage 15 is COMPLETE; Stage 13's B5/B6 remain BLOCKED.

@@ -542,7 +542,7 @@ GET/POST/script replies, queues all requests without a flag, excludes waiting
 from `maxTimeout`, and returns pre-submission 503 when its 16-waiter backlog is
 full. Do not modify the server or replay admitted operations.
 
-Stage 15 — queued admission and 0.3.2 delivery: ACTIVE (R25/R23). Acceptance:
+Stage 15 — queued admission and 0.3.2 delivery: COMPLETE (R25/R23). Acceptance:
 verify Android requests can wait behind a real held operation on the original
 endpoint and resolve once; Android cancellation disconnects/removes a queued
 request before browser submission; preserve execution budgets and absence of a
@@ -575,3 +575,13 @@ The effective gated resource profile is recorded in `verification.md`. Required
 delivery/cleanup criteria remain until the verified GitHub upload, independent
 asset comparison and reviewed temporary cleanup complete. B5/B6 remain confined
 to the still-BLOCKED Stage 13; no Stage 15 blocker or tracked deferral exists.
+
+Stage 15 delivery reconciliation: source commit
+`56ef75ce74789ca26bd612b70e5895cc7a903b8b` was pushed and published as the normal,
+latest GitHub release `v0.3.2`. The independently downloaded asset matches the
+tested signed deliverable byte-for-byte, including its SHA-256 and 2,103,647-byte
+size. Reviewed transactional cleanup removed the task's temporary build/emulator
+root and failed-command report directories without residual files. Task-owned
+verification processes stopped; the signed deliverable and required evidence
+remain. Every Stage 15 acceptance criterion is verified, with no blocker or
+tracked deferral. Stage 13 remains BLOCKED on the independent B5/B6 requirements.

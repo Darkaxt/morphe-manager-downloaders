@@ -483,3 +483,23 @@ removed all 4,609 temporary build/API-source members (69,410,826 logical bytes),
 with no errors; `D:/Temp/morphe-jdk21-migration` is independently confirmed absent.
 Both R26 migration stages are COMPLETE with no blocker or tracked deferral. Stage
 13's unrelated B5/B6 remain BLOCKED. No new external release was created.
+
+## Readable progress units / pending queue feedback
+
+R27 uses Android's locale-aware `Formatter.formatShortFileSize` for transferred
+and known total bytes; unknown totals remain omitted. Focused
+`:app:compileDebugKotlin` passed on Zulu JDK 21 with JVM target 17. The host gate
+was acquired (FIFO ticket 2), with effective two workers, no parallel projects,
+3 GiB Gradle heap and confirmed Kotlin in-process compilation. No test JVM,
+native compilation or emulator ran; no memory failure or budget increase occurred.
+This is compilation verification of a framework formatter presentation change,
+not a new device/download test. Evidence remains in
+`artifacts/verification/progress-units-build.log`. Reviewed cleanup removed all
+565 temporary members (1,306,999 logical bytes) without errors; the exact task
+temporary root is absent.
+
+The user subsequently requested monitoring Byparr's actual per-request queue
+feedback and publishing a combined release after integration. Stage 18/B7 is
+BLOCKED on the unfinished server implementation/original-endpoint qualification.
+The existing one-time monitor was reactivated for that scope at a 15-minute
+interval. No guessed position or new release has been implemented/published.

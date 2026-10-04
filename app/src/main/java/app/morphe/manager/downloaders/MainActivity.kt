@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.*
 import android.text.InputType
 import android.text.TextUtils
+import android.text.format.Formatter
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -369,8 +370,8 @@ class MainActivity : ComponentActivity() {
                 progress.isIndeterminate = state.total <= 0
                 if (state.total > 0) progress.progress = ((state.downloaded * 100) / state.total).toInt()
                 val verb = if (state.status == DownloadManager.STATUS_PAUSED) "Waiting for the network" else "Downloading"
-                status.text = "$verb…\n${state.downloaded / 1024} KB" +
-                    if (state.total > 0) " / ${state.total / 1024} KB" else ""
+                status.text = "$verb…\n${Formatter.formatShortFileSize(this, state.downloaded)}" +
+                    if (state.total > 0) " / ${Formatter.formatShortFileSize(this, state.total)}" else ""
             }
         }
     }

@@ -636,3 +636,42 @@ unsupported inspection claim. The task's 4,609 temporary build/source members we
 reviewed and deleted with no errors; its temporary root is absent, while required
 verification evidence and the original signed release remain. R26 is satisfied
 and verified with no blocker or tracked deferral. Stage 13's B5/B6 stay BLOCKED.
+
+## R27: Readable download progress sizes
+
+Display transferred and known total bytes with Android's locale-aware short file
+size formatter, automatically scaling B/KB/MB/GB as appropriate. Unknown totals
+remain omitted. This is a trivial presentation change; formal staging is omitted.
+Verify focused companion compilation before committing. No release is requested.
+
+R27 verification: focused `:app:compileDebugKotlin` passed with the effective
+gated resource profile. A release was subsequently authorized by R28, after queue
+feedback integration; do not publish the presentation change alone.
+
+## R28: Live Byparr queue feedback and combined release
+
+The user requested monitoring the Byparr task while it implements request-specific
+queue feedback, then integrating that feedback into Morphe's download dialog and
+creating a release including R27. The server owns its implementation/deployment;
+do not modify Byparr or implement guessed positions from the global `/ready` count.
+Wait for its actual qualified deployed API before adopting it. The current server
+proposal uses a caller UUID `requestId` and `GET /queue/{requestId}`; this proposal
+is not proof of a delivered API.
+
+Stage 18 — queue feedback integration and release: BLOCKED (R28). Acceptance:
+verify the completed server contract and original endpoint deployment; associate
+feedback with the current request, show actual waiting position/count and active
+state under the APK name, retain indeterminate progress until download begins and
+actual byte progress afterwards; cancel/finish feedback with that request and
+prevent stale updates or operation replay. Handle supported compatibility/error
+behavior according to the qualified API, verify moving queue/cancellation and
+integrated dialog behavior, preserve endpoint/settings/signing identity, commit
+and publish one normal/latest release with R27 and meaningful notes. Independently
+verify uploaded signed APK bytes and clean task-owned verification outputs.
+
+B7 (external): the Byparr task is ACTIVE and its per-request feedback implementation
+and original-endpoint qualification are unfinished. This blocks the R28 API,
+integration and release acceptance criteria. Resolve when its owner supplies the
+completed contract, deployment evidence and a working original endpoint. Park
+Stage 18 and monitor; no integration or release is complete while B7 remains.
+No tracked deferral is created. Stage 13's independent B5/B6 remain BLOCKED.

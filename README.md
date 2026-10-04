@@ -67,7 +67,10 @@ bundle merging and patching. The companion does not certify an APK's publisher.
 
 ## Build
 
-Requires Java 17+, Android SDK 36 and the bundled Gradle wrapper.
+Requires JDK 21, Android SDK 36 and the bundled Gradle wrapper. Set `JAVA_HOME`
+to your existing JDK 21 installation. Gradle, compilation and tests use that
+installation; automatic JDK discovery/downloads are disabled for this project.
+Java and Kotlin retain JVM target 17 for Android compatibility.
 
 ```powershell
 python "$env:USERPROFILE/.codex/skills/gradle-build-gate/scripts/invoke_gradle_build_gate.py" run --project $PWD --kotlin-strategy in-process -- :app:testDebugUnitTest :app:lintDebug :app:assembleDebug

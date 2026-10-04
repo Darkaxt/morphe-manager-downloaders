@@ -585,3 +585,54 @@ root and failed-command report directories without residual files. Task-owned
 verification processes stopped; the signed deliverable and required evidence
 remain. Every Stage 15 acceptance criterion is verified, with no blocker or
 tracked deferral. Stage 13 remains BLOCKED on the independent B5/B6 requirements.
+
+## R26: JDK 21 migration and single-version host policy (2026-10-04)
+
+The user authorized migrating Morphe and enforcing one JDK major version on this
+Windows host. The user clarified that this policy covers development JDKs only;
+preserve app-owned runtimes, including Bisq's Java 11 and JDownloader's Java 17.
+Use the existing machine-wide Zulu JDK 21 for Gradle, compilation
+and tests. Both Android modules retain Java/Kotlin JVM target 17 and the existing
+SDK/package/signing/application behavior. CI selects JDK 21. Project-local
+toolchain discovery uses JAVA_HOME without automatic downloads or discovery of
+other installations. Do not install another JDK, modify unrelated repositories,
+interrupt another build, or overwrite the published signed APK. This build-only
+migration does not authorize a new app release or change Stage 13's B5/B6.
+
+Stage 16 — migrate and verify JDK 21: COMPLETE (R26). Acceptance: both modules use
+the JDK 21 toolchain with explicit matching JVM target 17; CI and build guidance
+agree; fresh focused companion JVM tests, debug/release compilation, Android test
+compilation and release lint pass using only the existing Zulu 21 installation.
+Inspect effective toolchain, class-file target and resource settings from a gated
+build. Preserve the existing release APK and signing identity.
+
+Stage 17 — remove superseded host JDKs and reconcile: COMPLETE (R26).
+Acceptance: inventory actual JDK installations and caches, distinguish embedded
+JREs from JDKs, check remaining project requirements and active process identities,
+remove superseded JDK 17/25 development toolchains only after migration verification
+and safe coordination, and confirm only JDK 21 remains in the inspected inventory.
+Retain same-major JDK 21 copies where they serve existing projects. Clean task
+build outputs with reviewed tickets, record evidence, reconcile R26 and commit.
+No tracked deferrals. If another requirement or live consumer prevents safe
+removal, identify its exact owner and resolution condition rather than deleting
+an in-use dependency or claiming the single-version policy satisfied.
+
+Stage 16 reconciliation: the companion's JVM tests, debug/release and Android
+test compilation, signed release verification and release lint pass. Toolchain
+reports for both modules resolve only the existing Zulu 21 and confirm matching
+Java/Kotlin target 17 with provisioning/discovery disabled. The pinned-source API
+adapter now uses JDK 21 and the host build gate; its actual build passes, followed
+by successful legacy-module compilation and D8 conversion against that adapter.
+The published 0.3.2 APK retains its original hash. Effective gated settings are
+recorded in verification.md. No Stage 16 blocker or tracked deferral remains.
+
+Stage 17 reconciliation: reviewed deletion under the host-wide mutex removed the
+17/25 development toolchains, archives and locks after confirming no active build
+or old-JDK process. Their exact roots are absent. The accessible compiler inventory
+now contains only development JDK 21; machine/process JAVA_HOME select Zulu 21.
+User-exempt app runtimes and same-major copies serving other projects remain.
+The other-account cache named JDK 21 was unreadable and is documented without an
+unsupported inspection claim. The task's 4,609 temporary build/source members were
+reviewed and deleted with no errors; its temporary root is absent, while required
+verification evidence and the original signed release remain. R26 is satisfied
+and verified with no blocker or tracked deferral. Stage 13's B5/B6 stay BLOCKED.

@@ -420,3 +420,66 @@ emulator, host fixture and remote loopback fixture stopped, and the task-owned
 idle Gradle processes were cleaned after completion evidence. The signed APK and
 required evidence remain outside the removed roots. No physical-device state was
 changed. Stage 15 is COMPLETE; Stage 13's B5/B6 remain BLOCKED.
+
+## JDK 21 migration (2026-10-04)
+
+Both Android modules now use `jvmToolchain(21)` with explicit Kotlin JVM target
+17 and matching Java source/target compatibility 17. The pinned-source API
+adapter uses the same settings, its own copy of the repository's pinned Gradle
+wrapper, and the installed host-wide gate. CI selects JDK 21. Project and adapter
+toolchain discovery are limited to `JAVA_HOME`; automatic discovery/provisioning
+are disabled. This follows the documented distinction between compiler toolchain
+and bytecode target in the [Kotlin toolchain guidance](https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support).
+
+Fresh verification used the existing machine-wide Zulu 21.0.12.1. The companion's
+JVM contracts, debug and signed release builds, Android test compilation and
+release lint passed (0 errors, 82 warnings). An invocation-local report resolved
+both modules' Java compiler to `C:/Program Files/Zulu/zulu-21` and confirmed Java
+and Kotlin target 17, with toolchain discovery/provisioning disabled. The API
+helper built the unchanged API source at `b7e94efb7a2c35496e11174c6d1892685d95b443`;
+the legacy module then compiled and passed D8 conversion against that local AAR.
+All 198 inspected project/adapter Java and Kotlin class files have major version
+61 (JVM 17). This verifies compiler migration and Android packaging; no additional
+device or website test was required or performed for the unchanged app logic.
+
+All three successful Gradle commands acquired `Local\Darka.AndroidGradleBuildGate`
+and ran sequentially. Effective settings were two workers, no parallel projects,
+3 GiB Gradle heap, Kotlin 2.3.10 in-process sharing that heap, and one 512 MiB test
+JVM for the companion contracts. Compiler strategy, actual test JVM command and
+profile markers were inspected; native tasks had no sources. Single-use Gradle
+daemons exited after their commands. No emulator was launched, no memory failure
+occurred and no budget was raised. The first launch stopped before building
+because optional retirement could not safely authenticate an idle Gradle 8.6
+daemon. Read-only inspection confirmed idle lifecycle/no client; subsequent runs
+used the supported `--retire-daemons none` policy with activity inspection and
+mutex exclusion still enabled. The unrelated daemon was not forcefully stopped.
+
+The migration-built release passes APK signature verification with unchanged
+certificate SHA-256 `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+The published local 0.3.2 deliverable retains SHA-256
+`104024efdd7bd3be818bf273cb0e6266b6b8fcab9da69071747fbade334b4047`;
+this task does not replace that release asset or change its version.
+
+The user clarified that the single-version policy covers development JDKs and
+preserves app-owned runtimes. A fresh Everything compiler inventory, release-file
+inspection, installation registry, JAVA_HOME and project/scheduled-task checks
+identified the obsolete development toolchains. Reviewed cleanup removed the
+Gradle-managed Temurin 17 and Microsoft 25, the standalone `D:/Tools/jdk-25-temurin`,
+and the associated 17/25 cache archives/locks: 1,692 exact members and
+1,423,619,506 logical bytes, with no errors. The same Windows mutex was held during
+final build-activity/process inspection and deletion; no build or old-JDK consumer
+was active. Those exact roots are independently confirmed absent. Accessible
+remaining development compiler installations all report JDK 21; both machine and
+current-process JAVA_HOME point to Zulu 21. Same-major copies used by other
+projects remain. Bisq's Java 11, JDownloader's Java 17 and the installed Java 8 JRE
+are preserved as application runtimes. Another account's cache named JDK 21 was
+visible in Everything but unreadable; it was neither changed nor represented as
+an inspected release file. This is an audit of the discovered accessible host
+installations, not a claim of exhaustive access to other Windows accounts.
+
+Required logs, class-target and inventory evidence are retained under
+`artifacts/verification/jdk21-migration/` (gitignored). Reviewed transactional cleanup
+removed all 4,609 temporary build/API-source members (69,410,826 logical bytes),
+with no errors; `D:/Temp/morphe-jdk21-migration` is independently confirmed absent.
+Both R26 migration stages are COMPLETE with no blocker or tracked deferral. Stage
+13's unrelated B5/B6 remain BLOCKED. No new external release was created.

@@ -658,7 +658,7 @@ Wait for its actual qualified deployed API before adopting it. The qualified
 contract uses a caller UUID `requestId` and `GET /queue/{requestId}`; deployment
 evidence and independent original-endpoint verification are required before adoption.
 
-Stage 18 — queue feedback integration and release: ACTIVE (R28). Acceptance:
+Stage 18 — queue feedback integration and release: COMPLETE (R28). Acceptance:
 verify the completed server contract and original endpoint deployment; associate
 feedback with the current request, show actual waiting position/count and active
 state under the APK name, retain indeterminate progress until download begins and
@@ -696,3 +696,13 @@ upgrades independently downloaded published 0.3.2 while preserving the endpoint,
 and downloads/validates the real Showly original with exact hashes and readable
 handoff URI. Source, signed artifact and release lint are verified. Publication,
 independent asset verification and temporary-output cleanup remain before closure.
+
+Stage 18 final reconciliation: v0.3.3 is published as the normal/latest GitHub
+release from verified source `db0517a7b089e5285b90f8224f32b3382f0becf5`.
+The independently downloaded APK matches every local byte, its unchanged signing
+certificate verifies, and GitHub's tag/target/latest state matches that source.
+Reviewed transactional cleanup removed all task temporary outputs without errors;
+required evidence and the signed deliverable remain. The task-owned emulator and
+fixtures have exited, and the one-time adoption monitor is PAUSED. R27 and every
+R28 acceptance criterion are satisfied and verified; no R28 blocker or tracked
+deferral remains. Stage 13's unrelated APKMirror B5/B6 stay BLOCKED.

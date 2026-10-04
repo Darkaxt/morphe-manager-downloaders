@@ -14,7 +14,8 @@ APKPure, APKCombo and Uptodown; an APKMirror APKM was also imported into existin
 on the isolated Android emulator.
 See [verification](docs/verification.md) and the [specification](docs/specification.md).
 
-**Uptodown requires Byparr's browser scripting update** (`custom-post-scripting`).
+**Uptodown requires Byparr's browser scripting update** (`custom-post-scripting`
+or `custom-post-scripting-queue`).
 The companion supplies the verified recipe and lets the website generate its own
 token. Older Byparr servers remain usable with the other sources. See
 [Uptodown integration](docs/uptodown.md).
@@ -37,11 +38,18 @@ token. Older Byparr servers remain usable with the other sources. See
    the handoff; **Share file** offers another receiving app. Morphe may display its
    own bundle/version warnings before importing a file.
 
-There is no public default server. **Byparr server** edits the setting at any time;
-missing settings and failed page/download requests offer **Cancel** and **Save**.
-Saving retries a pending page explicitly. Check the displayed failure as well as the URL: an unresolved
+There is no public default server. The cog opens **Byparr server** at any time;
+its setup dialog offers **Cancel** and **Save**. Failures stay in the download
+dialog with **Retry** and **Open in Browser**. Saving retries a pending page
+explicitly. Check the displayed failure as well as the URL: an unresolved
 server challenge, missing release or client download rejection cannot necessarily
 be fixed by changing the endpoint.
+
+With Byparr's transactional queue update, page requests wait their turn behind
+other consumers without an opt-in setting or automatic retry. Cancel disconnects
+the pending request. Queue waiting does not use the server's browser execution
+budget. A full backlog is reported separately so you can retry explicitly;
+queuing does not resolve a website's independent Cloudflare rejection.
 
 The companion has its own package (`app.morphe.manager.downloaders`) and signing
 identity. It never patches, signs or installs downloaded apps and does not replace
@@ -62,12 +70,14 @@ bundle merging and patching. The companion does not certify an APK's publisher.
 Requires Java 17+, Android SDK 36 and the bundled Gradle wrapper.
 
 ```powershell
-./gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+python "$env:USERPROFILE/.codex/skills/gradle-build-gate/scripts/invoke_gradle_build_gate.py" run --project $PWD --kotlin-strategy in-process -- :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ./scripts/build-companion.ps1
 ```
 
 The signing script builds and lints the release configuration, then copies the
-local deliverable to `artifacts/Morphe-Downloader-0.2.0.apk`. It creates a
+local deliverable to `artifacts/Morphe-Downloader-<version>.apk`. On Windows it
+requires the installed shared Gradle build gate (or `-BuildGate <helper-path>`),
+which serializes participating builds and applies the resource profile. It creates a
 persistent signing identity only on first use, under
 `%USERPROFILE%/.android/keystores/morphe-manager-downloaders/`. Keep `companion.p12`
 and `password.txt` together and private; both are needed to build updates accepted

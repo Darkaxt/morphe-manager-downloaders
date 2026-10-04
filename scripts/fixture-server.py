@@ -20,6 +20,16 @@ def main():
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):
             nonlocal retry_requests
+            if self.path in ("/queue-full/v1", "/unavailable/v1"):
+                self.rfile.read(int(self.headers["Content-Length"]))
+                detail = "Browser queue full; no request was queued or submitted" if self.path == "/queue-full/v1" else "Service unavailable"
+                data = json.dumps({"detail": detail}).encode()
+                self.send_response(503)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             if self.path == "/retry/v1":
                 retry_requests += 1
                 if retry_requests == 1:

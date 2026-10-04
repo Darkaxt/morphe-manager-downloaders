@@ -145,7 +145,8 @@ class ByparrClient(private val debugFixtures: Boolean) {
             conn.requestMethod = "POST"
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
-            // maxTimeout is the Byparr protocol's own browser-request limit.
+            // maxTimeout is Byparr's execution budget after admission. Waiting
+            // stays on this cancellable connection without a client deadline.
             val request = JSONObject().put("cmd", "request.get").put("url", target).put("maxTimeout", 60000)
             val uptodown = policy.source(target) == DownloadSource.UPTODOWN
             val scriptedId = if (uptodown) Uptodown.scriptedId(target) else null
@@ -154,8 +155,25 @@ class ByparrClient(private val debugFixtures: Boolean) {
             val body = request.toString().toByteArray(Charsets.UTF_8)
             conn.setFixedLengthStreamingMode(body.size)
             conn.outputStream.use { it.write(body) }
-            if (conn.responseCode !in 200..299 || uptodown && conn.responseCode != 200)
-                throw IOException("Byparr API failed (HTTP ${conn.responseCode}).")
+            val code = conn.responseCode
+            if (code !in 200..299 || uptodown && code != 200) {
+                val queueFull = code == 503 && conn.contentType.orEmpty().startsWith("application/json") && runCatching {
+                    conn.errorStream?.bufferedReader()?.use { reader ->
+                        val buffer = CharArray(513)
+                        var length = 0
+                        while (length < buffer.size) {
+                            val count = reader.read(buffer, length, buffer.size - length)
+                            if (count < 0) break
+                            length += count
+                        }
+                        length <= 512 && JSONObject(String(buffer, 0, length)).optString("detail") ==
+                            "Browser queue full; no request was queued or submitted"
+                    } == true
+                }.getOrDefault(false)
+                throw IOException(if (queueFull)
+                    "Byparr's browser queue is full (HTTP 503). No page request was submitted. Use Retry to try again."
+                    else "Byparr API failed (HTTP $code).")
+            }
             val reply = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
             if (reply.optString("status") != "ok") throw IOException("Byparr did not resolve the page.")
             val solution = reply.getJSONObject("solution")

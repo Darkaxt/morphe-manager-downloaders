@@ -1,9 +1,13 @@
 param(
     [string]$OutputRoot = 'D:\Temp\morphe-manager-downloaders-build',
-    [string]$SigningRoot = (Join-Path $env:USERPROFILE '.android\keystores\morphe-manager-downloaders')
+    [string]$SigningRoot = (Join-Path $env:USERPROFILE '.android\keystores\morphe-manager-downloaders'),
+    [string]$BuildGate = (Join-Path $env:USERPROFILE '.codex\skills\gradle-build-gate\scripts\invoke_gradle_build_gate.py')
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
+if (!(Test-Path -LiteralPath $BuildGate)) {
+    throw 'Install the shared gradle-build-gate helper or supply its path with -BuildGate. Direct Gradle launch is not permitted.'
+}
 $keyFile = Join-Path $SigningRoot 'companion.p12'
 $passwordFile = Join-Path $SigningRoot 'password.txt'
 if ((Test-Path -LiteralPath $keyFile) -ne (Test-Path -LiteralPath $passwordFile)) {
@@ -26,7 +30,10 @@ try {
     }
     $buildPath = $OutputRoot.Replace('\', '/')
     $keyPath = $keyFile.Replace('\', '/')
-    & (Join-Path $repoRoot 'gradlew.bat') :app:assembleRelease :app:lintRelease `
+    # Kotlin 2.3.10 / AGP 8.13.2 in-process compilation is qualified by the
+    # focused companion build; it shares the gate's explicit 3 GiB Gradle heap.
+    & python $BuildGate run --project $repoRoot --kotlin-strategy in-process `
+        --log "$OutputRoot/release-build.log" -- :app:assembleRelease :app:lintRelease `
         "-PbuildRoot=$buildPath" "-PcompanionKeystore=$keyPath" `
         --project-cache-dir "$OutputRoot/project-cache" --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Companion verification build failed.' }

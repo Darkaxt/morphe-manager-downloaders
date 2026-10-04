@@ -350,3 +350,57 @@ matches the size/digest above; an independently downloaded copy matched every
 byte of the tested local artifact. Temporary release verification files were
 removed through a reviewed cleanup ticket. No additional Gradle build occurred.
 Stage 14 is COMPLETE; Stage 13's automatic correction/phone proof stays BLOCKED.
+
+## Transactional Byparr admission / 0.3.2 (2026-10-04)
+
+The original endpoint reports `custom-post-scripting-queue`; its running image
+matches the qualified Byparr image `38f540160714261a43a82a094c47440d9a4f02c24aed0b3967d150e0c3b758de`.
+Reviewed server admission evidence confirms FIFO, bounded backlog, disconnect
+removal and unchanged production configuration. This task did not change Byparr
+or its other consumers.
+
+Actual Android transport checks held one controlled browser operation on that
+endpoint. The Android client's queued request was cancelled and removed while
+the owner remained held, proving no browser admission for the cancelled request.
+A second queued request resolved the exact YouTube 21.16.256 APKMirror page after
+owner release. The test's two owner pages were submitted once each; its temporary
+loopback fixture process was stopped. This proves page resolution and cancellation,
+not an APKMirror attachment Cloudflare correction.
+
+The full-backlog regression reproduced the generic 503 message before the change.
+It now distinguishes only the exact JSON queue-full response; another 503 remains
+generic. Focused Android failure/lifecycle and Uptodown capture contracts pass.
+The first UI run was obstructed by a fresh-emulator Google Messages ANR dialog;
+after clearing that unrelated test-fixture dialog, only the affected UI checks
+were repeated and passed. No production change was made for that fixture issue.
+
+The signed 0.3.1 -> 0.3.2 upgrade preserved its UI-saved endpoint. The signed
+release then passed a fresh original-endpoint -> Uptodown Showly build 1220892131
+-> Android download -> metadata/hash -> unchanged readable receiving URI workflow.
+Package `com.michaldrabik.showly2`, version 3.72.0/build 843, 12,004,991 bytes,
+SHA-256 `f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074`.
+An earlier test used the wrong app hostname and was correctly rejected as an
+unsuccessful target response; the corrected canonical build URL is retained in
+the signed live evidence. No downloaded original was patched or installed.
+
+Focused companion JVM contracts, signed release build and release lint pass
+(0 errors, 82 existing warnings). All Gradle invocations used the installed
+`Local\Darka.AndroidGradleBuildGate` supervisor, which actually acquired the gate;
+the final command waited behind another task's build. Effective profile: two
+workers, no parallel projects, 3 GiB Gradle heap, Kotlin 2.3.10 in-process with
+AGP 8.13.2 sharing that heap, one 512 MiB test fork. The compiler strategy and
+actual test launch were inspected in the build log; no native compilation tasks
+had sources. The emulator was paused during the final build. No memory-related
+failure or budget increase occurred. One early invocation failed because a
+PowerShell path argument was unquoted, then passed with correct quoting. Completed
+task-owned idle daemons/cached compiler workers were cleaned only after inspecting
+identity, completed lifecycle and the absence of build-client connections.
+
+Signed deliverable: `artifacts/Morphe-Downloader-0.3.2.apk`, version code 6,
+2,103,647 bytes. SHA-256
+`104024efdd7bd3be818bf273cb0e6266b6b8fcab9da69071747fbade334b4047`.
+Unchanged certificate SHA-256:
+`4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+Evidence is retained in `artifacts/verification/byparr-queue/` (gitignored).
+Stage 13's B5/B6 remain unresolved; the new queue adoption is a separate verified
+release scope. Publication and final cleanup are recorded after delivery.

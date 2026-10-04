@@ -532,3 +532,46 @@ cleanup removed only that temporary verification download; the original local
 deliverable and evidence remain. No Gradle command was run, so no build-gate or
 new-profile verification is claimed. Stage 13 remains BLOCKED on B5/B6; release
 notes explicitly retain those limits. Stage 14 has no blocker or tracked deferral.
+
+## R25: Adopt deployed transactional admission and release (2026-10-04)
+
+The user authorized monitoring the Byparr task, adopting its verified feature,
+and publishing a new release. The original endpoint now runs the qualified
+`custom-post-scripting-queue` image from Byparr commit `cd07c46`; its API retains
+GET/POST/script replies, queues all requests without a flag, excludes waiting
+from `maxTimeout`, and returns pre-submission 503 when its 16-waiter backlog is
+full. Do not modify the server or replay admitted operations.
+
+Stage 15 — queued admission and 0.3.2 delivery: ACTIVE (R25/R23). Acceptance:
+verify Android requests can wait behind a real held operation on the original
+endpoint and resolve once; Android cancellation disconnects/removes a queued
+request before browser submission; preserve execution budgets and absence of a
+client queue deadline; explain the specific full-backlog response accurately
+without relabeling other 503 errors or automatically retrying. Keep existing
+inline Retry/Open in Browser and settings/signing identity. Verify focused
+contracts, signed build/lint, in-place upgrade and real Uptodown original APK /
+metadata / unchanged receiving URI on an isolated emulator. Record effective
+Gradle gate/resource evidence, commit/push and publish normal/latest v0.3.2;
+independently compare uploaded bytes and clean expendable outputs. The established
+emulator release boundary applies; Stage 13's independent B5/B6 remain BLOCKED.
+Queue adoption does not satisfy the APKMirror native attachment correction.
+
+Plan: demonstrate the deployed queue and cancellation contract, apply only the
+confirmed full-backlog error adaptation, verify the integrated Android original
+workflow and release identity, then deliver and reconcile this scope. No tracked
+deferral is created; do not claim overall Stage 13 completion.
+
+Stage 15 pre-delivery reconciliation: the actual original endpoint and its running
+image match the Byparr queue contract. Android cancellation removes a waiting
+request while its controlled owner stays held; a second queued Android request
+resolves the real YouTube page after release. Existing transport is compatible
+without a flag, new client deadline or replay. The exact full-backlog message
+regression and other-503 distinction pass, as do affected inline error/settings/
+lifecycle and Uptodown capture contracts. Signed build/lint, JVM contracts,
+unchanged certificate and 0.3.1 -> 0.3.2 saved-endpoint upgrade pass. The signed
+release freshly downloads the exact Showly 3.72.0/build 843 original through the
+updated server and verifies metadata/hash and unchanged readable receiving URI.
+The effective gated resource profile is recorded in `verification.md`. Required
+delivery/cleanup criteria remain until the verified GitHub upload, independent
+asset comparison and reviewed temporary cleanup complete. B5/B6 remain confined
+to the still-BLOCKED Stage 13; no Stage 15 blocker or tracked deferral exists.

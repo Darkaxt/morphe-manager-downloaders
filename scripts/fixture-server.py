@@ -16,10 +16,33 @@ def main():
     payload = Path(args.apk).read_bytes()
     slow_started, slow_release = Event(), Event()
     retry_requests = 0
+    feedback_release = Event()
+    feedback_sampled = Event()
+    feedback_id = None
+    feedback_phase = "queued"
+    feedback_posts = 0
+    real_observed = {str(position): Event() for position in (1, 2)}
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):
-            nonlocal retry_requests
+            nonlocal retry_requests, feedback_id, feedback_posts
+            if self.path == "/feedback/v1":
+                request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                feedback_id = request["requestId"]
+                feedback_posts += 1
+                feedback_release.wait()
+                data = json.dumps({"status": "ok", "requestId": feedback_id, "solution": {
+                    "status": 200, "url": request["url"], "userAgent": "Android Byparr fixture",
+                    "response": '<html><title>Queue fixture - APKMirror</title><a class="downloadButton" href="/slow.apk">APK</a></html>',
+                    "cookies": []}}).encode()
+                try:
+                    self.send_response(200)
+                    self.send_header("Content-Length", str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                    pass
+                return
             if self.path in ("/queue-full/v1", "/unavailable/v1"):
                 self.rfile.read(int(self.headers["Content-Length"]))
                 detail = "Browser queue full; no request was queued or submitted" if self.path == "/queue-full/v1" else "Service unavailable"
@@ -67,7 +90,59 @@ def main():
             self.wfile.write(data)
 
         def do_GET(self):
-            nonlocal retry_requests
+            nonlocal retry_requests, feedback_id, feedback_phase, feedback_posts
+            if self.path.startswith("/real-observed/"):
+                real_observed[self.path.rsplit("/", 1)[1]].set()
+                self.html("Observed")
+                return
+            if self.path.startswith("/real-observed-wait/"):
+                real_observed[self.path.rsplit("/", 1)[1]].wait()
+                self.html("Observed")
+                return
+            if self.path == "/feedback-reset":
+                feedback_id = None
+                feedback_posts = 0
+                feedback_phase = "queued"
+                feedback_release.clear()
+                feedback_sampled.clear()
+                self.html("Reset")
+                return
+            if self.path == "/real-observed-reset":
+                for observed in real_observed.values():
+                    observed.clear()
+                self.html("Reset")
+                return
+            if self.path.startswith("/feedback-phase/"):
+                feedback_phase = self.path.rsplit("/", 1)[1]
+                self.html("Phase changed")
+                return
+            if self.path == "/feedback-release":
+                feedback_release.set()
+                self.html("Released")
+                return
+            if self.path == "/feedback-sampled":
+                feedback_sampled.wait()
+                self.html("Feedback sampled")
+                return
+            if self.path == "/feedback-posts":
+                self.html(str(feedback_posts))
+                return
+            if self.path.startswith("/feedback/queue/"):
+                feedback_sampled.set()
+                request_id = self.path.rsplit("/", 1)[1]
+                if request_id != feedback_id or feedback_phase == "missing":
+                    self.html("No live request", code=404)
+                    return
+                data = json.dumps({"requestId": request_id, "state": "active" if feedback_phase == "active" else "queued",
+                    "position": 0 if feedback_phase == "active" else 1 if feedback_phase == "first" else 2,
+                    "total": 1 if feedback_phase in ("first", "active") else 2, "queueLimit": 16}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             if self.path == "/retry-reset":
                 retry_requests = 0
                 self.html("Reset")

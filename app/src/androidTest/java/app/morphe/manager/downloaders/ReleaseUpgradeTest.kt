@@ -21,7 +21,7 @@ class ReleaseUpgradeTest {
     private val endpoint = "https://upgrade-fixture.example:8191/v1"
     @Test fun aSaveEndpointOnPublishedRelease() {
         org.junit.Assume.assumeTrue(InstrumentationRegistry.getArguments().getString("releaseUpgrade") == "prepare")
-        assertEquals("0.3.1", context.packageManager.getPackageInfo(context.packageName, 0).versionName)
+        assertEquals("0.3.2", context.packageManager.getPackageInfo(context.packageName, 0).versionName)
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use {
             val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
             val input = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
@@ -42,7 +42,7 @@ class ReleaseUpgradeTest {
     }
     @Test fun bVerifyEndpointOnNewRelease() {
         org.junit.Assume.assumeTrue(InstrumentationRegistry.getArguments().getString("releaseUpgrade") == "verify")
-        assertEquals("0.3.2", context.packageManager.getPackageInfo(context.packageName, 0).versionName)
+        assertEquals("0.3.3", context.packageManager.getPackageInfo(context.packageName, 0).versionName)
         assertEquals(endpoint, context.getSharedPreferences("byparr", Context.MODE_PRIVATE).getString("endpoint", null))
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use {
             val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())

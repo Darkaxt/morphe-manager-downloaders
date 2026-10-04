@@ -654,11 +654,11 @@ The user requested monitoring the Byparr task while it implements request-specif
 queue feedback, then integrating that feedback into Morphe's download dialog and
 creating a release including R27. The server owns its implementation/deployment;
 do not modify Byparr or implement guessed positions from the global `/ready` count.
-Wait for its actual qualified deployed API before adopting it. The current server
-proposal uses a caller UUID `requestId` and `GET /queue/{requestId}`; this proposal
-is not proof of a delivered API.
+Wait for its actual qualified deployed API before adopting it. The qualified
+contract uses a caller UUID `requestId` and `GET /queue/{requestId}`; deployment
+evidence and independent original-endpoint verification are required before adoption.
 
-Stage 18 — queue feedback integration and release: BLOCKED (R28). Acceptance:
+Stage 18 — queue feedback integration and release: ACTIVE (R28). Acceptance:
 verify the completed server contract and original endpoint deployment; associate
 feedback with the current request, show actual waiting position/count and active
 state under the APK name, retain indeterminate progress until download begins and
@@ -669,9 +669,30 @@ integrated dialog behavior, preserve endpoint/settings/signing identity, commit
 and publish one normal/latest release with R27 and meaningful notes. Independently
 verify uploaded signed APK bytes and clean task-owned verification outputs.
 
-B7 (external): the Byparr task is ACTIVE and its per-request feedback implementation
-and original-endpoint qualification are unfinished. This blocks the R28 API,
-integration and release acceptance criteria. Resolve when its owner supplies the
-completed contract, deployment evidence and a working original endpoint. Park
-Stage 18 and monitor; no integration or release is complete while B7 remains.
+B7 resolved: Byparr commits `9136423` and `ca44017` deliver the completed feedback
+contract and qualified deployment. The original endpoint independently reports
+`custom-post-scripting-queue-feedback`, and its qualified image/source evidence
+is inspected before client adoption. Queue positions count pending requests only:
+position minus one is the number queued ahead; the active owner is excluded.
 No tracked deferral is created. Stage 13's independent B5/B6 remain BLOCKED.
+
+Stage 18 plan: implement a caller UUID and browser-free feedback monitoring for
+that request, expose queued position/count and active resolution in the existing
+dialog, verify bounded focused Android contracts plus actual original-endpoint
+feedback movement/cancellation and signed upgrade/download behavior, then reconcile
+and publish the combined release. Feedback GET sampling is monitoring only; its
+schedule/HTTP diagnostic budget must never impose a deadline, replay or recovery
+policy on the original browser operation. Stop and disconnect feedback on actual
+completion/cancellation; UI generation/current-request checks reject stale updates.
+
+Stage 18 implementation verification: the original deployed API is qualified and
+adopted. Focused Android checks pass for exact identity/count validation, missing
+feedback without replay or false completion, cancellation, actual dialog phases
+and byte units, and cancellation/recreation without old status restoration.
+The actual Android caller moved from position 3 to 2 under live consumer load;
+its UUID then returned 404 after cancellation while the controlled owner remained
+active. The cancelled targets received no browser visits. The signed 0.3.3 APK
+upgrades independently downloaded published 0.3.2 while preserving the endpoint,
+and downloads/validates the real Showly original with exact hashes and readable
+handoff URI. Source, signed artifact and release lint are verified. Publication,
+independent asset verification and temporary-output cleanup remain before closure.

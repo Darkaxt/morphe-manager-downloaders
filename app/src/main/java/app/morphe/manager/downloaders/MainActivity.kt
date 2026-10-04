@@ -241,7 +241,13 @@ class MainActivity : ComponentActivity() {
         pageClient = client
         executor.execute {
             try {
-                val page = resolvedPage ?: client.fetch(endpoint, allowed)
+                val page = resolvedPage ?: client.fetch(endpoint, allowed) { feedback ->
+                    handler.post {
+                        if (isDestroyed || generation != requestGeneration || pageClient !== client ||
+                            !client.receivingQueueFeedback) return@post
+                        status.text = feedback.message
+                    }
+                }
                 handler.post {
                     if (isDestroyed || generation != requestGeneration) return@post
                     browserPrefs.edit().putString("title", page.content.appName).commit()

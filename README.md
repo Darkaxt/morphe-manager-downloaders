@@ -15,7 +15,7 @@ on the isolated Android emulator.
 See [verification](docs/verification.md) and the [specification](docs/specification.md).
 
 **Uptodown requires Byparr's browser scripting update** (`custom-post-scripting`
-or `custom-post-scripting-queue`).
+or a newer scripting/queue version).
 The companion supplies the verified recipe and lets the website generate its own
 token. Older Byparr servers remain usable with the other sources. See
 [Uptodown integration](docs/uptodown.md).
@@ -50,6 +50,15 @@ other consumers without an opt-in setting or automatic retry. Cancel disconnects
 the pending request. Queue waiting does not use the server's browser execution
 budget. A full backlog is reported separately so you can retry explicitly;
 queuing does not resolve a website's independent Cloudflare rejection.
+
+With Byparr's live feedback update (`custom-post-scripting-queue-feedback`), the
+dialog shows your current position among waiting requests and how many are queued
+ahead. The active browser owner is excluded from that count. When admitted, the
+status changes to resolving the download; transfer progress then shows measured
+bytes in readable B/KB/MB/GB units. Each browser operation has its own UUID and
+feedback stops when it finishes or is cancelled. Unavailable or malformed feedback
+does not complete, cancel or resubmit the original operation. Older servers retain
+the ordinary status display.
 
 The companion has its own package (`app.morphe.manager.downloaders`) and signing
 identity. It never patches, signs or installs downloaded apps and does not replace

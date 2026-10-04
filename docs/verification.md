@@ -503,3 +503,60 @@ feedback and publishing a combined release after integration. Stage 18/B7 is
 BLOCKED on the unfinished server implementation/original-endpoint qualification.
 The existing one-time monitor was reactivated for that scope at a 15-minute
 interval. No guessed position or new release has been implemented/published.
+
+## Live queue feedback / 0.3.3 verification
+
+Byparr's immutable commits `9136423` and `ca44017` deliver `/queue/{requestId}`;
+the original endpoint independently reports `custom-post-scripting-queue-feedback`.
+The owner-qualified deployed image/source evidence was inspected before adoption.
+Morphe supplies one fresh UUID per original operation and samples only its separate
+browser-free feedback endpoint. One-based positions count pending callers; queued
+ahead is position minus one, excluding the active owner. Active feedback describes
+resolution, with an indeterminate bar; native transfers retain measured progress.
+
+Focused Android verification passes identity/count validation, unsupported 404
+feedback without false completion or replay, held-request cancellation, queue →
+active → actual-byte UI transition, and cancelled-dialog recreation without old
+feedback restoration. Screenshots were inspected for readable units and queue
+text. Existing failure actions, page lifecycle/recreation and archive rejection
+checks also pass. The first fixture run failed before its ADB reverse route was
+established; after establishing that route, affected checks passed. First-boot
+download-provider activity delayed an archive-rejection check; the focused retest
+passed unchanged. A new test initially selected `Cancel` instead of the existing
+`Cancel download`; correcting only that test selector resolved its failure.
+
+The real original-endpoint test passes under concurrent consumer load: the Android
+request moved from queue position 3 to 2 after an earlier waiter disconnected.
+Both cancelled UUIDs became untracked while the controlled owner stayed active;
+neither target was visited before or after releasing the owner. One unrelated
+waiter remained and was not disturbed. The initial test harness assumed a quiet
+queue; that assumption was discarded when other consumers joined. The qualified
+test observes actual positions instead. Its temporary in-memory loopback fixture
+exited; a shutdown-response race produced a cleanup diagnostic, and independent
+connection refusal confirms the fixture port is closed. No Byparr code, deployment
+configuration or consumer configuration was changed.
+
+The signed 0.3.3 APK (version code 7) upgrades an independently downloaded 0.3.2
+release in place and retains its saved Byparr endpoint. Its signing certificate
+remains SHA-256 `4b99c36a398c62dd2eb818ed8ae6a56fff6081fc9c77990fe1998335c5d08c11`.
+A fresh real Showly 3.72.0/build 843 Uptodown download on that release passes APK
+layout/package/version/build checks, 12,004,991-byte size, SHA-256
+`f0fac7fc5474168ca982fd220361f3bbb76d4f4f3ed9e89cf03d2465d2b77074`, MD5
+`e1bb5ea5b4e0d866c3159034076f3c90`, metadata dialog presentation and receiving-app
+URI readability/hash checks. Physical-phone patching/installation is not claimed.
+The connected Thor was untouched; all Android tests used the task-owned emulator.
+
+Focused JVM contracts, debug/release packaging, Android test compilation and
+release lint pass (0 errors, 81 warnings). Every Gradle launch acquired the shared
+mutex through the installed FIFO gate (tickets 6, 7, 8, 11). Ticket 6 failed before
+compilation because PowerShell split an unquoted property; quoted arguments fixed
+the invocation. The effective profile is two workers, no parallel projects,
+3 GiB Gradle heap, Kotlin 2.3.10 in-process sharing that budget on JDK 21/JVM target
+17, and one actual 512 MiB JVM test fork. Native tasks have no sources. The
+emulator was started after the production build and paused for test-only rebuilds.
+No memory failure occurred and no budget was increased. Single-use daemons exited;
+only confirmed-idle incompatible daemons were gracefully retired by the gate.
+
+Required build/test logs, live queue observations, screenshots and signatures are
+retained in `artifacts/verification/queue-feedback/` (gitignored). Release asset
+verification and transactional cleanup will be recorded after publication.

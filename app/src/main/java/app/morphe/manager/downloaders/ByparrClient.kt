@@ -5,6 +5,9 @@ import org.jsoup.Jsoup
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
+import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 object ByparrEndpoint {
@@ -116,8 +119,82 @@ data class RemotePage(val url: String, val title: String, val next: String?, val
     }
 }
 
-/** One explicitly configured Byparr request at a time; no retry or polling loop. */
+/** One explicitly configured browser operation at a time; feedback never replays it. */
 class ByparrClient(private val debugFixtures: Boolean) {
+    data class QueueStatus(val position: Int, val total: Int) {
+        val message: String get() {
+            if (position == 0) return "Byparr is resolving the download…"
+            val ahead = position - 1
+            val noun = if (ahead == 1) "request" else "requests"
+            return "Waiting for Byparr…\nQueue position $position of $total\n$ahead $noun queued ahead of you"
+        }
+        companion object {
+            fun parse(reply: JSONObject, requestId: String): QueueStatus? {
+                if (reply.optString("requestId") != requestId) return null
+                val position = reply.opt("position") as? Int ?: return null
+                val total = reply.opt("total") as? Int ?: return null
+                val limit = reply.opt("queueLimit") as? Int ?: return null
+                if (limit <= 0 || total !in 0..limit) return null
+                return when (reply.optString("state")) {
+                    "queued" -> if (position in 1..total) QueueStatus(position, total) else null
+                    "active" -> if (position == 0) QueueStatus(position, total) else null
+                    else -> null
+                }
+            }
+        }
+    }
+
+    /** Browser-free GET sampling; never retries or imposes a deadline on /v1. */
+    private class QueueMonitor(api: String, val requestId: String, private val update: (QueueStatus) -> Unit) {
+        private val url = api.removeSuffix("/v1") + "/queue/$requestId"
+        private val stopped = AtomicBoolean(false)
+        private val executor = Executors.newSingleThreadScheduledExecutor { task ->
+            Thread(task, "byparr-feedback-$requestId").apply { isDaemon = true }
+        }
+        @Volatile private var connection: HttpURLConnection? = null
+        val running get() = !stopped.get()
+        private var previous: QueueStatus? = null
+        @Synchronized fun start() {
+            // The API is sampled once per second for display only. Operation
+            // completion/cancellation, rather than elapsed time, stops sampling.
+            if (!stopped.get()) executor.scheduleWithFixedDelay({ sample() }, 0, 1, TimeUnit.SECONDS)
+        }
+        @Synchronized fun stop() {
+            if (stopped.compareAndSet(false, true)) {
+                connection?.disconnect()
+                executor.shutdownNow()
+            }
+        }
+        private fun sample() {
+            if (stopped.get()) return
+            val conn = URI(url).toURL().openConnection() as HttpURLConnection
+            connection = conn
+            try {
+                if (stopped.get()) return
+                conn.instanceFollowRedirects = false
+                conn.useCaches = false
+                conn.setRequestProperty("Cache-Control", "no-cache")
+                // Diagnostic HTTP budgets affect this optional feedback GET
+                // only; a stalled/unsupported endpoint cannot cancel /v1.
+                conn.connectTimeout = 15000
+                conn.readTimeout = 15000
+                if (conn.responseCode != 200) return
+                val reply = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
+                val status = QueueStatus.parse(reply, requestId) ?: return
+                if (!stopped.get() && status != previous) {
+                    previous = status
+                    update(status)
+                }
+            } catch (_: IOException) {
+                // /v1 remains authoritative for results and errors.
+            } catch (_: org.json.JSONException) {
+                // Ignore malformed feedback rather than inventing a position.
+            } finally {
+                conn.disconnect()
+                connection = null
+            }
+        }
+    }
     data class Page(val content: RemotePage, val userAgent: String, val cookies: List<RemoteCookie>,
                     val attachmentHeaders: Map<String, String> = emptyMap()) {
         fun cookieHeader(url: String) = cookies.filter { it.matches(url) }.joinToString("; ") { "${it.name}=${it.value}" }
@@ -126,7 +203,9 @@ class ByparrClient(private val debugFixtures: Boolean) {
                           val sendReferer: Boolean, val referer: String? = null, val accept: String? = null)
     private val cancelled = AtomicBoolean(false)
     @Volatile private var connection: HttpURLConnection? = null
-    fun cancel() { cancelled.set(true); connection?.disconnect() }
+    @Volatile private var queueMonitor: QueueMonitor? = null
+    val receivingQueueFeedback get() = !cancelled.get() && queueMonitor?.running == true
+    fun cancel() { cancelled.set(true); queueMonitor?.stop(); connection?.disconnect() }
     private fun connect(url: String): HttpURLConnection {
         if (cancelled.get()) throw IOException("Page request cancelled.")
         val conn = URI(url).toURL().openConnection() as HttpURLConnection
@@ -136,11 +215,14 @@ class ByparrClient(private val debugFixtures: Boolean) {
         return conn
     }
 
-    fun fetch(endpoint: String, url: String): Page {
+    fun fetch(endpoint: String, url: String, onQueueStatus: ((QueueStatus) -> Unit)? = null): Page {
         val api = ByparrEndpoint.normalize(endpoint, debugFixtures) ?: throw IOException("Enter a valid HTTPS Byparr endpoint.")
         val policy = DownloadPolicy(debugFixtures)
         val target = policy.pageUrl(url) ?: throw IOException("Open a supported download-site link.")
         val conn = connect(api)
+        val requestId = UUID.randomUUID().toString()
+        val monitor = onQueueStatus?.let { QueueMonitor(api, requestId, it) }
+        queueMonitor = monitor
         try {
             conn.requestMethod = "POST"
             conn.doOutput = true
@@ -148,6 +230,7 @@ class ByparrClient(private val debugFixtures: Boolean) {
             // maxTimeout is Byparr's execution budget after admission. Waiting
             // stays on this cancellable connection without a client deadline.
             val request = JSONObject().put("cmd", "request.get").put("url", target).put("maxTimeout", 60000)
+                .put("requestId", requestId)
             val uptodown = policy.source(target) == DownloadSource.UPTODOWN
             val scriptedId = if (uptodown) Uptodown.scriptedId(target) else null
             if (scriptedId != null) request.put("maxTimeout", 120000).put("blockMedia", false)
@@ -155,6 +238,8 @@ class ByparrClient(private val debugFixtures: Boolean) {
             val body = request.toString().toByteArray(Charsets.UTF_8)
             conn.setFixedLengthStreamingMode(body.size)
             conn.outputStream.use { it.write(body) }
+            if (cancelled.get()) throw IOException("Page request cancelled.")
+            monitor?.start()
             val code = conn.responseCode
             if (code !in 200..299 || uptodown && code != 200) {
                 val queueFull = code == 503 && conn.contentType.orEmpty().startsWith("application/json") && runCatching {
@@ -200,7 +285,11 @@ class ByparrClient(private val debugFixtures: Boolean) {
                 return Page(resolved, agent, parsed, headers)
             }
             return Page(page, agent, parsed)
-        } finally { conn.disconnect(); connection = null }
+        } finally {
+            monitor?.stop()
+            queueMonitor = null
+            conn.disconnect(); connection = null
+        }
     }
 
     fun attachment(page: Page, start: String): Attachment {
